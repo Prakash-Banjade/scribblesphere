@@ -5,16 +5,19 @@ const {
   updateArticle,
   deleteArticle,
   findArticleById,
+  getUserArticles,
 } = require("../controllers/articlesController.js");
 const verifyJWTs = require("../middlewares/verifyJWTs.js");
 
 router.use(verifyJWTs);
-router.route("/")
+router
+  .route("/")
   .get(getAllArticles)
   .post(postArticle)
   .put(updateArticle)
   .delete(deleteArticle);
 
-router.get('/:id', findArticleById);
+router.get("/myarticles", getUserArticles);
+router.get("/:id", findArticleById);
 
 module.exports = router;

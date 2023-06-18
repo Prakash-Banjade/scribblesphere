@@ -30,7 +30,7 @@ const loginUser = async (req, res) => {
         const accessToken = jwt.sign(
             {userInfo: { email, roles }}, // this first parameter is the payload of the user that is the data of user that the jwt token contains. We pass the keys of the roles not the word 'Admin', 'user' itself.
             process.env.ACCESS_TOKEN_SECRET,
-            {expiresIn: '30s'}
+            {expiresIn: '300s'}
         )
 
         const refreshToken = jwt.sign(

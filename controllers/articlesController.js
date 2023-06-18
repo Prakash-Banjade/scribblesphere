@@ -1,4 +1,5 @@
 const Article = require("../model/article.js");
+const User = require("../model/User.js");
 
 const getAllArticles = async (req, res) => {
   const articles = await Article.find();
@@ -14,9 +15,9 @@ const getAllArticles = async (req, res) => {
 };
 
 const postArticle = async (req, res) => {
-  const { title, content, author, tags } = req.body;
+  const { title, content, tags } = req.body;
 
-  if (!title || !content || !author)
+  if (!title || !content)
     return res.status(400).json({
       message: "Title, content and the author of the article are required",
     });
@@ -31,10 +32,14 @@ const postArticle = async (req, res) => {
   const articleTags = tags?.length ? tags : [];
 
   try {
+    const userEmail = req.email;
+
+    const user = await User.findOne({email: userEmail}).exec()
+
     const newArticle = await Article.create({
       title,
       content,
-      author,
+      author: user?._id || 'unknown',
       comments: [],
       tags: articleTags,
     });
@@ -53,9 +58,10 @@ const postArticle = async (req, res) => {
 const updateArticle = async (req, res) => {
   const { id, title, content, author, tags } = req.body;
 
-  if (!id) return res.status(400).json({
-    message: 'id of the article must be passed'
-  })
+  if (!id)
+    return res.status(400).json({
+      message: "id of the article must be passed",
+    });
 
   if (!title || !content || !author)
     return res.status(400).json({
@@ -124,10 +130,32 @@ const findArticleById = async (req, res) => {
   res.json(foundArticle);
 };
 
+const getUserArticles = async (req, res) => {
+  const email = req?.email;
+
+  try {
+    const foundUser = await User.findOne({ email }).exec();
+
+    if (!foundUser)
+      return res.status(400).json({
+        message: "Invalid email",
+      });
+
+    const articles = await Article.find({}).where('author').equals(foundUser._id).exec();
+
+    res.json(articles);
+  } catch (e) {
+    res.status(500).json({
+      message: e.message,
+    });
+  }
+};
+
 module.exports = {
   getAllArticles,
   postArticle,
   updateArticle,
   deleteArticle,
-  findArticleById
+  findArticleById,
+  getUserArticles,
 };

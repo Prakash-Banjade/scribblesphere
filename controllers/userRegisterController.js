@@ -3,11 +3,11 @@ const User = require('../model/User')
 const bcrypt = require('bcrypt')
 
 const registerUser = async (req, res) => {
-    const {email, pwd} = req.body
+    const {email, pwd, username} = req.body
 
-    if (!email || !pwd) return res.status(400).json({
+    if (!email || !pwd || !username) return res.status(400).json({
         "error": true,
-        "message": 'Both email and pwd must not be empty'
+        "message": 'Username, email and password are required'
     })
 
     const userExists = await User.findOne({email}).exec();
@@ -18,12 +18,14 @@ const registerUser = async (req, res) => {
 
     try{
         const newUser = await User.create({
+            username,
             email,
             password: await bcrypt.hash(pwd, 10) 
         })
 
         res.status(201).json({
-            message: 'User registered successfully'
+            message: 'User registered successfully',
+            user: newUser
         })
 
     }catch(e){
