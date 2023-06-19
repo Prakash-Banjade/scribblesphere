@@ -4,10 +4,8 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
 const loginUser = async (req, res) => {
-    // getting username and pwd from the request body
     const {email, pwd} = req.body
 
-    // checking if the username and pwd are supplied
     if (!email || !pwd) return res.status(400).json({
         "error": true,
         "message": 'Both email and password are required'

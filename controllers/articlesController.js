@@ -2,7 +2,7 @@ const Article = require("../model/article.js");
 const User = require("../model/User.js");
 
 const getAllArticles = async (req, res) => {
-  const articles = await Article.find();
+  const articles = await Article.find().populate('author');
 
   if (!articles || !articles.length) {
     return res.json({
@@ -120,7 +120,7 @@ const findArticleById = async (req, res) => {
       message: "id must be passed",
     });
 
-  const foundArticle = await Article.findById(id).exec();
+  const foundArticle = await Article.findById(id).populate('author').exec();
 
   if (!foundArticle)
     return res.status(400).json({
@@ -146,6 +146,7 @@ const getUserArticles = async (req, res) => {
       .where("author")
       .equals(foundUser._id)
       .limit(limit)
+      .populate('author')
       .exec();
 
     res.json(articles);

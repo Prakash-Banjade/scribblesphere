@@ -11,7 +11,7 @@ const handleLogout = async (req, res) => {
         return res.sendStatus(204);
     }
 
-    const doc = User.findOneAndUpdate({username: foundUser.username}, {refreshToken: ''}).exec();
+    const doc = User.findOneAndUpdate({email: foundUser.email}, {refreshToken: ''}).exec();
 
     res.clearCookie('jwt', {httpOnly: true, sameSite: 'None', secure: 'true'})
     res.sendStatus(204)
