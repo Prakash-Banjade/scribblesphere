@@ -34,12 +34,12 @@ const postArticle = async (req, res) => {
   try {
     const userEmail = req.email;
 
-    const user = await User.findOne({email: userEmail}).exec()
+    const user = await User.findOne({ email: userEmail }).exec();
 
     const newArticle = await Article.create({
       title,
       content,
-      author: user?._id || 'unknown',
+      author: user?._id || "unknown",
       comments: [],
       tags: articleTags,
     });
@@ -132,6 +132,7 @@ const findArticleById = async (req, res) => {
 
 const getUserArticles = async (req, res) => {
   const email = req?.email;
+  const limit = req?.query.limit || 0
 
   try {
     const foundUser = await User.findOne({ email }).exec();
@@ -141,7 +142,11 @@ const getUserArticles = async (req, res) => {
         message: "Invalid email",
       });
 
-    const articles = await Article.find({}).where('author').equals(foundUser._id).exec();
+    const articles = await Article.find({})
+      .where("author")
+      .equals(foundUser._id)
+      .limit(limit)
+      .exec();
 
     res.json(articles);
   } catch (e) {
