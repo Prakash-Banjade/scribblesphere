@@ -1,7 +1,7 @@
 const User = require('../model/User.js')
 
 const getAllUsers = async (req, res) => {
-    const users = await User.find()
+    const users = await User.find().select("-password")
 
     if (!users || !users.length) return res.json({message: 'No users registered'})
 

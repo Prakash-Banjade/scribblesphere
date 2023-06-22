@@ -2,7 +2,10 @@ const Article = require("../model/article.js");
 const User = require("../model/User.js");
 
 const getAllArticles = async (req, res) => {
-  const articles = await Article.find().populate('author');
+  const articles = await Article.find().populate({
+    path: "author",
+    select: "-password -refreshToken -email -roles",
+  });
 
   if (!articles || !articles.length) {
     return res.json({
@@ -120,7 +123,13 @@ const findArticleById = async (req, res) => {
       message: "id must be passed",
     });
 
-  const foundArticle = await Article.findById(id).populate('author').exec();
+  const foundArticle = await Article.findById(id)
+    .populate({ path: "author", select: "-password -refreshToken -email -roles" })
+    .populate({
+      path: "comments.author",
+      select: "-password -refreshToken -email -roles",
+    })
+    .exec();
 
   if (!foundArticle)
     return res.status(400).json({
@@ -132,7 +141,9 @@ const findArticleById = async (req, res) => {
 
 const getUserArticles = async (req, res) => {
   const email = req?.email;
-  const limit = req?.query.limit || 0
+  const limit = req?.query.limit || 0;
+
+  // console.log(`${email} - articles are being`)
 
   try {
     const foundUser = await User.findOne({ email }).exec();
@@ -146,10 +157,44 @@ const getUserArticles = async (req, res) => {
       .where("author")
       .equals(foundUser._id)
       .limit(limit)
-      .populate('author')
+      .populate("author")
       .exec();
 
     res.json(articles);
+  } catch (e) {
+    res.status(500).json({
+      message: e.message,
+    });
+  }
+};
+
+const postComment = async (req, res) => {
+  const articleId = req.params.id;
+  const { comment } = req.body;
+
+  try {
+    const foundArticle = await Article.findById(articleId).exec();
+
+    if (!foundArticle)
+      return res.status(404).json({
+        message: "Article not found",
+      });
+
+    const foundUser = await User.findOne({ email: req.email }).exec();
+
+    const authorId = foundUser._id;
+
+    const newComment = {
+      text: comment,
+      author: authorId,
+    };
+
+    foundArticle.comments.push(newComment);
+    foundArticle.save();
+
+    res.json({
+      message: "Comment added",
+    });
   } catch (e) {
     res.status(500).json({
       message: e.message,
@@ -164,4 +209,5 @@ module.exports = {
   deleteArticle,
   findArticleById,
   getUserArticles,
+  postComment,
 };

@@ -14,7 +14,10 @@ const verifyJWTs = (req, res, next) => {
             if (err) return res.sendStatus(403) // forbidden - invalid token || doesn't received token
 
             req.email = decoded.userInfo.email; 
-            req.roles = decoded.userInfo.roles
+            req.roles = decoded.userInfo.roles;
+            req.user = decoded.userInfo.fullname;
+
+            // console.log(req.email)
             next();
         }
     )
