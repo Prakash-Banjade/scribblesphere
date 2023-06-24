@@ -1,5 +1,23 @@
 const mongoose = require('mongoose');
 
+
+const commentSchema = new mongoose.Schema(
+  {
+    text: {
+      type: String,
+      required: true
+    },
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    }
+  },
+  {
+    timestamps: true,
+  }
+);
+
 const artileSchema = new mongoose.Schema(
   {
     title: {
@@ -15,23 +33,7 @@ const artileSchema = new mongoose.Schema(
       ref: 'User',
       required: true
     },
-    comments: [
-      {
-        text: {
-          type: String,
-          required: true
-        },
-        author: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'User',
-          required: true
-        },
-        createdAt: {
-          type: Date,
-          default: Date.now
-        }
-      }
-    ],
+    comments: [commentSchema],
     tags: [String]
   },
   {

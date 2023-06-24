@@ -9,6 +9,7 @@ const getAllArticles = async (req, res) => {
 
   if (!articles || !articles.length) {
     return res.json({
+      type: 'empty',
       message:
         "No articles published yet. Be the first to publish the article!",
     });
@@ -22,7 +23,7 @@ const postArticle = async (req, res) => {
 
   if (!title || !content)
     return res.status(400).json({
-      message: "Title, content and the author of the article are required",
+      message: "Title and content of the article are required",
     });
 
   const foundArticle = await Article.findOne({ title }).exec();
