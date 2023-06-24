@@ -20,7 +20,7 @@ server.use('/register', require('./routes/register.js'))
 server.use('/login', require('./routes/login.js'))
 server.use('/refresh', require('./routes/refresh.js'))
 server.use('/logout', require('./routes/logout.js'))
-server.use("/articles", require('./routes/articles.js'));
+server.use("/articles", require('./routes/api/articles.js'));
 server.use("/users", require('./routes/users.js'));
 
 

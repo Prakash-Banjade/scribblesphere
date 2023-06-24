@@ -9,7 +9,7 @@ const getAllArticles = async (req, res) => {
 
   if (!articles || !articles.length) {
     return res.json({
-      type: 'empty',
+      type: "empty",
       message:
         "No articles published yet. Be the first to publish the article!",
     });
@@ -33,7 +33,7 @@ const postArticle = async (req, res) => {
       message: "Article with the same title already existed",
     });
 
-  const articleTags = tags?.length ? tags : [];
+  const articleTags = tags?.length ? tags.slice(0,5) : [];
 
   try {
     const userEmail = req.email;
@@ -125,7 +125,10 @@ const findArticleById = async (req, res) => {
     });
 
   const foundArticle = await Article.findById(id)
-    .populate({ path: "author", select: "-password -refreshToken -email -roles" })
+    .populate({
+      path: "author",
+      select: "-password -refreshToken -email -roles",
+    })
     .populate({
       path: "comments.author",
       select: "-password -refreshToken -email -roles",
@@ -203,6 +206,40 @@ const postComment = async (req, res) => {
   }
 };
 
+const searchArticle = async (req, res) => {
+  const searchQuery = req.query.q;
+
+  if (!searchQuery || searchQuery?.length === 0) return res.sendStatus(204);
+
+  try {
+    let searchResults = [];
+
+    if (searchQuery.startsWith("#")) {
+      // Search by tags
+      const tag = searchQuery.substring(1);
+      searchResults = await Article.find({ tags: tag }).populate({
+        path: "author",
+        select: "-password -refreshToken -email -roles",
+      });
+    } else {
+      // Search by title
+      searchResults = await Article.find({
+        title: { $regex: searchQuery, $options: "i" },
+      }).populate({
+        path: "author",
+        select: "-password -refreshToken -email -roles",
+      });
+    }
+
+    res.json(searchResults);
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while searching for articles." });
+  }
+};
+
 module.exports = {
   getAllArticles,
   postArticle,
@@ -211,4 +248,5 @@ module.exports = {
   findArticleById,
   getUserArticles,
   postComment,
+  searchArticle,
 };
