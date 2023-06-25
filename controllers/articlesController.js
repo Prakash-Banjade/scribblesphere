@@ -33,7 +33,7 @@ const postArticle = async (req, res) => {
       message: "Article with the same title already existed",
     });
 
-  const articleTags = tags?.length ? tags.slice(0,5) : [];
+  const articleTags = tags?.length ? tags.slice(0, 5) : [];
 
   try {
     const userEmail = req.email;
@@ -41,8 +41,8 @@ const postArticle = async (req, res) => {
     const user = await User.findOne({ email: userEmail }).exec();
 
     const newArticle = await Article.create({
-      title,
-      content,
+      title: String(title).slice(0, 100),
+      content: String(content).slice(0, 5000),
       author: user?._id || "unknown",
       comments: [],
       tags: articleTags,
@@ -60,34 +60,41 @@ const postArticle = async (req, res) => {
 };
 
 const updateArticle = async (req, res) => {
-  const { id, title, content, author, tags } = req.body;
+  const { id, title, content, tags } = req.body;
 
   if (!id)
     return res.status(400).json({
-      message: "id of the article must be passed",
+      // servermessage: "id of the article must be passed",
+      message: "Something went wrong. Please try again. Report for any inconvinience",
     });
 
-  if (!title || !content || !author)
+  if (!title || !content)
     return res.status(400).json({
-      message: "Title, content and author are mandatory",
+      message: "Title, content are mandatory",
     });
 
-  const foundArticle = await Article.findById(id).exec();
+  const foundArticle = await Article.findById(id).populate('author').exec();
 
   if (!foundArticle)
     return res.status(400).json({
       message: `Unable to update the article. Article with id ${id} not found!`,
     });
+  
+  if (foundArticle.author.email !== req.email) return res.status(401).json({
+    message: 'You are not authorized to update this article'
+  })
+
+  const articleTags = tags?.length ? tags.slice(0, 5) : [];
 
   try {
     foundArticle.title = title;
     foundArticle.content = content;
-    foundArticle.author = author;
-    foundArticle.tags = tags;
+    foundArticle.tags = articleTags;
     await foundArticle.save();
 
     res.json({
       message: "Article successfully updated",
+      status: 200
     });
   } catch (e) {
     res.status(500).json({

@@ -22,7 +22,7 @@ router
   .route("/")
   .get(getAllArticles)
   .post(postArticle)
-  .put(updateArticle)
+  .patch(updateArticle)
   .delete(deleteArticle);
 
 module.exports = router;
