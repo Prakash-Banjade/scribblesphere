@@ -24,6 +24,7 @@ const postArticle = async (req, res) => {
   if (!title || !content)
     return res.status(400).json({
       message: "Title and content of the article are required",
+      status: 400,
     });
 
   const foundArticle = await Article.findOne({ title }).exec();
@@ -31,6 +32,7 @@ const postArticle = async (req, res) => {
   if (foundArticle)
     return res.status(409).json({
       message: "Article with the same title already existed",
+      status: 409,
     });
 
   const articleTags = tags?.length ? tags.slice(0, 5) : [];
@@ -51,10 +53,12 @@ const postArticle = async (req, res) => {
     res.status(201).json({
       message: "New Article created successfully",
       article: newArticle,
+      status: 201,
     });
   } catch (e) {
     res.status(500).json({
       message: e.message,
+      status: 500,
     });
   }
 };
@@ -65,24 +69,29 @@ const updateArticle = async (req, res) => {
   if (!id)
     return res.status(400).json({
       // servermessage: "id of the article must be passed",
-      message: "Something went wrong. Please try again. Report for any inconvinience",
+      message:
+        "Something went wrong. Please try again. Report for any inconvinience",
     });
 
   if (!title || !content)
     return res.status(400).json({
       message: "Title, content are mandatory",
+      status: 400,
     });
 
-  const foundArticle = await Article.findById(id).populate('author').exec();
+  const foundArticle = await Article.findById(id).populate("author").exec();
 
   if (!foundArticle)
-    return res.status(400).json({
+    return res.status(404).json({
       message: `Unable to update the article. Article with id ${id} not found!`,
+      status: 404,
     });
-  
-  if (foundArticle.author.email !== req.email) return res.status(401).json({
-    message: 'You are not authorized to update this article'
-  })
+
+  if (foundArticle.author.email !== req.email)
+    return res.status(401).json({
+      message: "You are not authorized to update this article",
+      status: 401,
+    });
 
   const articleTags = tags?.length ? tags.slice(0, 5) : [];
 
@@ -94,7 +103,7 @@ const updateArticle = async (req, res) => {
 
     res.json({
       message: "Article successfully updated",
-      status: 200
+      status: 200,
     });
   } catch (e) {
     res.status(500).json({
@@ -154,14 +163,12 @@ const getUserArticles = async (req, res) => {
   const email = req?.email;
   const limit = req?.query.limit || 0;
 
-  // console.log(`${email} - articles are being`)
-
   try {
-    const foundUser = await User.findOne({ email }).exec();
+    const foundUser = await User.findOne({ email }).select("-password -refreshToken -roles").exec();
 
     if (!foundUser)
-      return res.status(400).json({
-        message: "Invalid email",
+      return res.status(403).json({
+        message: "Requesting user doesn't exist",
       });
 
     const articles = await Article.find({})
@@ -189,6 +196,7 @@ const postComment = async (req, res) => {
     if (!foundArticle)
       return res.status(404).json({
         message: "Article not found",
+        status: 404,
       });
 
     const foundUser = await User.findOne({ email: req.email }).exec();

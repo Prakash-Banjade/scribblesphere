@@ -24,14 +24,13 @@ const loginUser = async (req, res) => {
     const roles = Object.values(foundUser.roles).filter(Boolean)
 
     const fullname = foundUser.fullname;
-    console.log(fullname)
 
     // if password matches
     if (isPwdMatch) {
         const accessToken = jwt.sign(
-            {userInfo: { email, roles }}, // this first parameter is the payload of the user that is the data of user that the jwt token contains. We pass the keys of the roles not the word 'Admin', 'user' itself.
+            {userInfo: { email, roles }},
             process.env.ACCESS_TOKEN_SECRET,
-            {expiresIn: '30s'}
+            {expiresIn: `${15*60}s`}
         )
 
         const refreshToken = jwt.sign(
