@@ -2,8 +2,8 @@ const cors = require("cors");
 
 const frontEndUrl = [
   'http://localhost:5173',
-  'bucci.netlify.app',
-  'bucci.vercel.app',
+  'https://bucci.netlify.app',
+  'https://bucci.vercel.app',
   'my-general-backend.vercel.app'
 ];
 
