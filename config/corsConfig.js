@@ -1,10 +1,14 @@
 const cors = require("cors");
 
-const frontEndUrl = process.env.FRONTEND_URL;
+const frontEndUrl = [
+  'http://localhost:5173',
+  'bucci.netlify.app',
+  'bucci.vercel.app',
+];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    if (origin === frontEndUrl || !origin) {
+    if (frontEndUrl.includes(origin) || !origin) {
       callback(null, true);
     } else {
       callback(new Error(`${origin} blocked by CORS policy`));

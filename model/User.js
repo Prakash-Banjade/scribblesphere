@@ -18,6 +18,7 @@ const userSchema = new Schema({
     },
     Editor: Number,
     Admin: Number,
+    Accountant: Number,
   },
   password: {
     type: String,

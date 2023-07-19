@@ -28,7 +28,7 @@ const loginUser = async (req, res) => {
     // if password matches
     if (isPwdMatch) {
         const accessToken = jwt.sign(
-            {userInfo: { email, roles }},
+            {userInfo: { email, roles, fullname }},
             process.env.ACCESS_TOKEN_SECRET,
             {expiresIn: `${15*60}s`}
         )
@@ -41,7 +41,7 @@ const loginUser = async (req, res) => {
         let doc = await User.findOneAndUpdate({email}, {refreshToken}, {new: true}).exec()
 
         res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24*3600*1000})
-        res.json({accessToken, roles, fullname})
+        res.json({accessToken})
     }else{
         res.status(401).json({
             error: true,
