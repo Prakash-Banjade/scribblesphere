@@ -4,6 +4,7 @@ const frontEndUrl = [
   'http://localhost:5173',
   'bucci.netlify.app',
   'bucci.vercel.app',
+  'my-general-backend.vercel.app'
 ];
 
 const corsOptions = {

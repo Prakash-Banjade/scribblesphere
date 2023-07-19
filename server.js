@@ -16,6 +16,9 @@ server.use(cookieParser())
 
 server.use(corsPolicy);
 
+server.get('/', (req, res) => {
+  res.send(`<h1>The backend in working fine</h1>`)
+})
 server.use('/register', require('./routes/register.js'))
 server.use('/login', require('./routes/login.js'))
 server.use('/refresh', require('./routes/refresh.js'))
