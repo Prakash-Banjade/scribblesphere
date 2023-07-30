@@ -1,8 +1,10 @@
 const router = require('express').Router()
+const { register, login, refresh, logout } = require('../controllers/authControllers.js');
 
+router.post('/register', register);
+router.post('/login', login);
+router.get('/refresh', refresh);
+router.post('/logout', logout);
 
-router.get()
-
-// refactor the auth route and corresponding controllers into a single file
 
 module.exports = router

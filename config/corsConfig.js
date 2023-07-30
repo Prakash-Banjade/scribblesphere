@@ -2,10 +2,7 @@ const cors = require("cors");
 
 const frontEndUrl = [
   'http://localhost:5173',
-  'https://bucci.netlify.app',
-  'https://bucci.vercel.app',
-  'https://bucci.vercel.app/',
-  'my-general-backend.vercel.app'
+  'https://scribblesphere.vercel.app',
 ];
 
 const corsOptions = {
