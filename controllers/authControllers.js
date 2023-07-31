@@ -110,18 +110,18 @@ const login = async (req, res) => {
         const accessToken = jwt.sign(
             { userInfo: { email, roles, fullname } },
             process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: `${15 * 60}s` }
+            { expiresIn: '15m' }
         )
 
         const refreshToken = jwt.sign(
             { email, roles, fullname },
             process.env.REFRESH_TOKEN_SECRET,
-            { expiresIn: '1d' }
+            { expiresIn: '3d' }
         )
         let doc = await User.findOneAndUpdate({ email }, { refreshToken }, { new: true }).exec()
         console.log(doc);
 
-        res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 3600 * 1000 })
+        res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 3600 * 1000, })
         res.json({ accessToken })
     } else {
         res.status(401).json({
@@ -137,6 +137,7 @@ const refresh = async (req, res) => {
     const refreshToken = cookies.jwt;
 
     const foundUser = await User.findOne({ refreshToken }).exec();
+    console.log(foundUser)
     if (!foundUser) return res.sendStatus(403); //Forbidden
     const roles = Object.values(foundUser.roles);
     // evaluate jwt
@@ -153,7 +154,7 @@ const refresh = async (req, res) => {
                 },
             },
             process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: `${15 * 60}s` }
+            { expiresIn: '15m' }
         );
         res.json({
             accessToken,
