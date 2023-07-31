@@ -114,7 +114,7 @@ const login = async (req, res) => {
         )
 
         const refreshToken = jwt.sign(
-            { email },
+            { email, roles, fullname },
             process.env.REFRESH_TOKEN_SECRET,
             { expiresIn: '1d' }
         )
@@ -143,6 +143,7 @@ const refresh = async (req, res) => {
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
         if (err || foundUser.email !== decoded.email) return res.sendStatus(403);
 
+       console.log(decoded)
         const accessToken = jwt.sign(
             {
                 userInfo: {

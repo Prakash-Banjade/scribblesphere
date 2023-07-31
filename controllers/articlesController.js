@@ -43,8 +43,8 @@ const postArticle = async (req, res) => {
     const user = await User.findOne({ email: userEmail }).exec();
 
     const newArticle = await Article.create({
-      title: String(title).slice(0, 100),
-      content: String(content).slice(0, 5000),
+      title: String(title).slice(0, 150),
+      content: String(content).slice(0, 10000),
       author: user?._id || "unknown",
       comments: [],
       tags: articleTags,
@@ -175,7 +175,10 @@ const getUserArticles = async (req, res) => {
       .where("author")
       .equals(foundUser._id)
       .limit(limit)
-      .populate("author")
+      .populate({
+        path: "author",
+        select: "-password -refreshToken -email -roles",
+      })
       .exec();
 
     res.json(articles);
