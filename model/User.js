@@ -25,11 +25,7 @@ const userSchema = new Schema({
     required: true,
   },
   details: {
-    nickname: {
-      type: String,
-      default: "",
-    },
-    qualification: {
+    profession: {
       type: String,
       default: "",
     },
@@ -47,7 +43,7 @@ const userSchema = new Schema({
       },
     ],
     writesOn: [String],
-    hobby: String,
+    description: String,
   },
   followers: {
     type: Number,

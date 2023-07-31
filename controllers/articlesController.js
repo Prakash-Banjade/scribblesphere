@@ -11,11 +11,12 @@ const getAllArticles = async (req, res) => {
     return res.json({
       type: "empty",
       message:
-        "No articles published yet. Be the first to publish the article!",
+        "No articles has been published yet. Be the first to publish the article!",
     });
   }
 
-  res.json(articles);
+  const sortedArticles = [...articles].reverse();
+  res.json(sortedArticles);
 };
 
 const postArticle = async (req, res) => {
@@ -44,7 +45,7 @@ const postArticle = async (req, res) => {
 
     const newArticle = await Article.create({
       title: String(title).slice(0, 150),
-      content: String(content).slice(0, 10000),
+      content: String(content),
       author: user?._id || "unknown",
       comments: [],
       tags: articleTags,

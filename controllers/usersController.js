@@ -52,7 +52,7 @@ const getMyDetails = async (req, res) => {
 
   try {
     const details = await User.findOne({ email: reqEmail })
-      .select("details")
+      .select("details followers following")
       .exec();
 
     if (!details) return res.sendStatus(403);

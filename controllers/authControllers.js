@@ -122,6 +122,7 @@ const login = async (req, res) => {
         console.log(doc);
 
         res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 3600 * 1000, })
+        console.log(refreshToken)
         res.json({ accessToken })
     } else {
         res.status(401).json({
@@ -137,7 +138,6 @@ const refresh = async (req, res) => {
     const refreshToken = cookies.jwt;
 
     const foundUser = await User.findOne({ refreshToken }).exec();
-    console.log(foundUser)
     if (!foundUser) return res.sendStatus(403); //Forbidden
     const roles = Object.values(foundUser.roles);
     // evaluate jwt
