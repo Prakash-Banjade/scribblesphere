@@ -121,7 +121,7 @@ const login = async (req, res) => {
         let doc = await User.findOneAndUpdate({ email }, { refreshToken }, { new: true }).exec()
         console.log(doc);
 
-        res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 3600 * 1000  })
+        res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 3600 * 1000, sameSite: 'None', secure: true  })
         console.log(refreshToken)
         res.json({ accessToken })
     } else {
