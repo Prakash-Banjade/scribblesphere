@@ -182,7 +182,8 @@ const getUserArticles = async (req, res) => {
       })
       .exec();
 
-    res.json(articles);
+    const sortedArticles = [...articles].reverse();
+    res.json(sortedArticles);
   } catch (e) {
     res.status(500).json({
       message: e.message,

@@ -15,7 +15,7 @@ ConnectDB();
 
 const PORT = process.env.PORT || 3500;
 
-server.use(express.json());
+server.use(express.json({limit: '50mb'}));
 server.use(cookieParser())
 
 server.use(corsPolicy);
