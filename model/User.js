@@ -33,9 +33,6 @@ const userSchema = new Schema({
       type: String,
       default: "",
     },
-    birth: {
-      type: Date,
-    },
     socialLinks: [
       {
         network: String,

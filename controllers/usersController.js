@@ -68,34 +68,36 @@ const getMyDetails = async (req, res) => {
 const setMyDetails = async (req, res) => {
   const userEmail = req.email;
 
-  const { nickname, qualification, address, brith, socialLinks, writesOn } =
-    req.body.details;
+  const { profession, address, description, socialLinks, writesOn } =
+    req.body;
 
-  if (!req.body.details)
+  if (!req.body)
     return res.status(403).json({
-      message: "update details must be passed in the request body",
+      message: "Missing arguments",
     });
 
   try {
     const foundUser = await User.findOne({ email: userEmail })
-      .select("-password")
+      .select("-password -roles -refreshToken")
       .exec();
 
+    console.log(userEmail, foundUser)
     if (!foundUser) return res.sendStatus(403);
 
+    const writesOnArr = writesOn?.length ? writesOn.slice(0, 5) : []
+
     foundUser.details = {
-      nickname,
-      qualification,
+      profession,
       address,
-      brith,
-      socialLinks,
-      writesOn,
+      description,
+      // socialLinks,
+      writesOn: writesOnArr,
     };
 
     await foundUser.save();
 
     res.json({
-      message: 'Details updated successfully'
+      message: 'Profile updated successfully'
     })
   } catch (e) {
     res.status(500).json({

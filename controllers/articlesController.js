@@ -20,9 +20,9 @@ const getAllArticles = async (req, res) => {
 };
 
 const postArticle = async (req, res) => {
-  const { title, content, tags } = req.body;
+  const { title, tagline, content, tags } = req.body;
 
-  if (!title || !content)
+  if (!title || !content || !tagline)
     return res.status(400).json({
       message: "Title and content of the article are required",
       status: 400,
@@ -44,7 +44,8 @@ const postArticle = async (req, res) => {
     const user = await User.findOne({ email: userEmail }).exec();
 
     const newArticle = await Article.create({
-      title: String(title).slice(0, 150),
+      title: String(title).slice(0, 250),
+      tagline: String(tagline).slice(0, 1000),
       content: String(content),
       author: user?._id || "unknown",
       comments: [],
