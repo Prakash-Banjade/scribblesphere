@@ -98,6 +98,8 @@ const login = async (req, res) => {
         return res.status(401).json({ message: `Invalid Email` }) // unauthorized
     }
 
+    const userId = foundUser._id;
+    console.log(userId)
     // evaluating the password
     const isPwdMatch = await bcrypt.compare(pwd, foundUser.password)
 
@@ -108,21 +110,19 @@ const login = async (req, res) => {
     // if password matches
     if (isPwdMatch) {
         const accessToken = jwt.sign(
-            { userInfo: { email, roles, fullname } },
+            { userInfo: { email, roles, fullname, userId } },
             process.env.ACCESS_TOKEN_SECRET,
             { expiresIn: '15m' }
         )
 
         const refreshToken = jwt.sign(
-            { email, roles, fullname },
+            { email, roles, fullname, userId },
             process.env.REFRESH_TOKEN_SECRET,
             { expiresIn: '3d' }
         )
         let doc = await User.findOneAndUpdate({ email }, { refreshToken }, { new: true }).exec()
-        console.log(doc);
 
         res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 3600 * 1000, sameSite: 'None', secure: true  })
-        // console.log(refreshToken)
         res.json({ accessToken })
     } else {
         res.status(401).json({
@@ -136,23 +136,20 @@ const refresh = async (req, res) => {
     const cookies = req.cookies;
     if (!cookies?.jwt) return res.sendStatus(401);
     const refreshToken = cookies.jwt;
-    console.log('refreshToken', refreshToken)
 
     const foundUser = await User.findOne({ refreshToken }).exec();
-    console.log('foundUser: ', foundUser)
     if (!foundUser) return res.sendStatus(403); //Forbidden
-    const roles = Object.values(foundUser.roles);
     // evaluate jwt
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
         if (err || foundUser.email !== decoded.email) return res.sendStatus(403);
 
-       console.log(decoded)
         const accessToken = jwt.sign(
             {
                 userInfo: {
                     email: decoded.email,
                     roles: decoded.roles,
                     fullname: decoded.fullname,
+                    userId: decoded.userId,
                 },
             },
             process.env.ACCESS_TOKEN_SECRET,

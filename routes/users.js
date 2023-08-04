@@ -6,7 +6,8 @@ const {
   setMyDetails,
   getMyDetails,
   setProfilePic,
-  getProfilePic
+  getProfilePic,
+  removeProfilePic
 } = require("../controllers/usersController.js");
 const verifyJWTs = require("../middlewares/verifyJWTs.js");
 const profilePicUpload = require('../middlewares/profilePicUpload.js');
@@ -15,7 +16,8 @@ const profilePicUpload = require('../middlewares/profilePicUpload.js');
 router.get("/getmydetails", verifyJWTs, getMyDetails);
 router.patch("/editmydetails", verifyJWTs, setMyDetails);
 router.post('/upload', [profilePicUpload, verifyJWTs], setProfilePic) // attatch verifyJWTs middleware
-router.get('/upload', verifyJWTs, getProfilePic)
+router.get('/upload/:userId', verifyJWTs, getProfilePic);
+router.delete('/upload', verifyJWTs, removeProfilePic);
 router.get("/:id", getUserById);
 
 // router.route("/").get(getAllUsers).delete(verifyJWTs, deleteUser); // attatch verifyJWTs middleware in delete route

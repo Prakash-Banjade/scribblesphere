@@ -145,11 +145,11 @@ const setProfilePic = async (req, res) => {
 }
 
 const getProfilePic = async (req, res) => {
-  const email = req.email;
+  const userId = req.params.userId;
 
-  console.log(email)
+  console.log(userId)
 
-  const foundUser = await User.findOne({ email }).exec();
+  const foundUser = await User.findById(userId).exec();
   console.log(foundUser)
 
   if (!foundUser) return res.status(401).json({ message: 'Unauthorized to get profile picture' });
@@ -159,4 +159,27 @@ const getProfilePic = async (req, res) => {
   res.json(pp);
 }
 
-module.exports = { getAllUsers, getUserById, deleteUser, getMyDetails, setMyDetails, setProfilePic, getProfilePic };
+const removeProfilePic = async (req, res) => {
+  const email = req.email;
+
+  const foundUser = await User.findOne({ email }).exec();
+
+  if (!foundUser) return res.status(401).json({ message: 'You are unauthorized to remove any image' })
+
+  try {
+    foundUser.profile.name = 'Profile'
+    foundUser.profile.data = null
+    foundUser.profile.type = ''
+
+    await foundUser.save();
+    res.json({ message: 'Removed Successfully', status: 200 })
+  } catch (e) {
+    console.log(e)
+    res.status(500).json({
+      message: e.message,
+      status: 500,
+    })
+  }
+}
+
+module.exports = { getAllUsers, getUserById, deleteUser, getMyDetails, setMyDetails, setProfilePic, getProfilePic, removeProfilePic };
