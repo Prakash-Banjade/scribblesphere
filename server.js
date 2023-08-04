@@ -4,8 +4,8 @@ const express = require("express");
 const server = express();
 
 const path = require('path')
-const { logger, logEvents } = require('./middlewares/logger')
-const errorHandler = require('./middlewares/errorHandler')
+const { logger, logEvents } = require('./utils/logger')
+const errorHandler = require('./utils/errorHandler')
 const mongoose = require("mongoose");
 const ConnectDB = require("./config/dbConfiguration.js");
 const corsPolicy = require('./config/corsConfig.js')
@@ -33,7 +33,7 @@ server.all('*', (req, res) => {
   if (req.accepts('html')) {
     res.sendFile(path.join(__dirname, 'views', '404.html'))
   } else if (req.accepts('json')) {
-    res.json({ message: '404 Not Found' })
+    res.json({ message: `Route ${req.url} not found` })
   } else {
     res.type('txt').send('404 Not Found')
   }

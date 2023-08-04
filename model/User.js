@@ -11,6 +11,20 @@ const userSchema = new Schema({
     type: String,
     required: true,
   },
+  profile: {
+    name: {
+      type: String,
+      default: 'Profile'
+    },
+    data: {
+      type: Buffer,
+      default: null
+    },
+    type: {
+      type: String,
+      default: ''
+    },
+  },
   roles: {
     User: {
       type: Number,

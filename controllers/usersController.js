@@ -1,4 +1,6 @@
 const User = require("../model/User.js");
+const sharp = require('sharp');
+
 
 const getAllUsers = async (req, res) => {
   const users = await User.find().select("-password");
@@ -52,7 +54,7 @@ const getMyDetails = async (req, res) => {
 
   try {
     const details = await User.findOne({ email: reqEmail })
-      .select("details followers following")
+      .select("details followers following profile")
       .exec();
 
     if (!details) return res.sendStatus(403);
@@ -90,20 +92,71 @@ const setMyDetails = async (req, res) => {
       profession,
       address,
       description,
-      // socialLinks,
+      socialLinks,
       writesOn: writesOnArr,
     };
 
     await foundUser.save();
 
     res.json({
-      message: 'Profile updated successfully'
+      message: 'Profile updated successfully',
+      status: 200,
     })
   } catch (e) {
     res.status(500).json({
       message: e.message,
+      status: 500
     });
   }
 };
 
-module.exports = { getAllUsers, getUserById, deleteUser, getMyDetails, setMyDetails };
+const setProfilePic = async (req, res) => {
+  const file = req.file;
+  // console.log(req.body)
+  if (!file) return res.status(400).json({ message: 'No files served' });
+
+  const userEmail = req.email;
+  const foundUser = await User.findOne({ email: userEmail }).exec();
+  if (!foundUser) return res.status(401).json({ message: 'Unauthorized' })
+
+  // Set the desired image dimensions and quality
+  const width = 200;
+  const height = 200;
+  const quality = 80; // Set your desired quality (0 to 100)
+
+  // Resize and compress the image using sharp
+  const resizedImage = await sharp(file.buffer)
+    .resize(width, height, { fit: 'cover' })
+    .jpeg({ quality })
+    .toBuffer();
+
+  console.log(resizedImage)
+
+  try {
+    foundUser.profile.name = file.originalname
+    foundUser.profile.data = resizedImage
+    foundUser.profile.type = file.mimetype
+    await foundUser.save();
+
+    res.json({ message: 'Profile picture added', status: 200 })
+  } catch (e) {
+    res.status(500).json({ message: e.message })
+  }
+}
+
+const getProfilePic = async (req, res) => {
+  const email = req.email;
+
+  console.log(email)
+
+  const foundUser = await User.findOne({ email }).exec();
+  console.log(foundUser)
+
+  if (!foundUser) return res.status(401).json({ message: 'Unauthorized to get profile picture' });
+
+  const pp = foundUser.profile;
+
+  res.json(pp);
+}
+
+module.exports = { getAllUsers, getUserById, deleteUser, getMyDetails, setMyDetails, setProfilePic, getProfilePic };
