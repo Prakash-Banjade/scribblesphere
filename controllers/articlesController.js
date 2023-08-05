@@ -66,7 +66,7 @@ const postArticle = async (req, res) => {
 };
 
 const updateArticle = async (req, res) => {
-  const { id, title, content, tags } = req.body;
+  const { id, title, content, tags, tagline } = req.body;
 
   if (!id)
     return res.status(400).json({
@@ -75,9 +75,9 @@ const updateArticle = async (req, res) => {
         "Something went wrong. Please try again. Report for any inconvinience",
     });
 
-  if (!title || !content)
+  if (!title || !content || !tagline)
     return res.status(400).json({
-      message: "Title, content are mandatory",
+      message: "Title, content and tagline are mandatory",
       status: 400,
     });
 
@@ -101,6 +101,7 @@ const updateArticle = async (req, res) => {
     foundArticle.title = title;
     foundArticle.content = content;
     foundArticle.tags = articleTags;
+    foundArticle.tagline = tagline
     await foundArticle.save();
 
     res.json({
@@ -135,7 +136,7 @@ const deleteArticle = async (req, res) => {
 };
 
 const findArticleById = async (req, res) => {
-  const id = req.params.id;
+  const id = req.params?.id;
 
   if (!id)
     return res.status(400).json({
