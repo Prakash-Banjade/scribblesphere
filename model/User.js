@@ -34,10 +34,7 @@ const userSchema = new Schema({
     Admin: Number,
     Accountant: Number,
   },
-  password: {
-    type: String,
-    required: true,
-  },
+  password: String,
   details: {
     profession: {
       type: String,

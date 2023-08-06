@@ -83,7 +83,6 @@ const setMyDetails = async (req, res) => {
       .select("-password -roles -refreshToken")
       .exec();
 
-    console.log(userEmail, foundUser)
     if (!foundUser) return res.sendStatus(403);
 
     const writesOnArr = writesOn?.length ? writesOn.slice(0, 5) : []
@@ -130,8 +129,6 @@ const setProfilePic = async (req, res) => {
     .jpeg({ quality })
     .toBuffer();
 
-  console.log(resizedImage)
-
   try {
     foundUser.profile.name = file.originalname
     foundUser.profile.data = resizedImage
@@ -147,10 +144,9 @@ const setProfilePic = async (req, res) => {
 const getProfilePic = async (req, res) => {
   const userId = req.params.userId;
 
-  console.log(userId)
 
   const foundUser = await User.findById(userId).exec();
-  console.log(foundUser)
+  // console.log(foundUser)
 
   if (!foundUser) return res.status(401).json({ message: 'Unauthorized to get profile picture' });
 

@@ -1,4 +1,9 @@
 const User = require("../model/User");
+const { OAuth2Client } = require('google-auth-library');
+const clientId = process.env.CLIENT_ID
+const { v4: uuid } = require('uuid')
+
+const client = new OAuth2Client(clientId);
 
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken')
@@ -122,7 +127,7 @@ const login = async (req, res) => {
         )
         let doc = await User.findOneAndUpdate({ email }, { refreshToken }, { new: true }).exec()
 
-        res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 3600 * 1000, sameSite: 'None', secure: true  })
+        res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 3600 * 1000, sameSite: 'None', secure: true })
         res.json({ accessToken })
     } else {
         res.status(401).json({
@@ -134,7 +139,7 @@ const login = async (req, res) => {
 
 const refresh = async (req, res) => {
     const cookies = req.cookies;
-    if (!cookies?.jwt) return res.sendStatus(401);
+    if (!cookies?.jwt) return res.sendStatus(401); 
     const refreshToken = cookies.jwt;
 
     const foundUser = await User.findOne({ refreshToken }).exec();
@@ -178,4 +183,84 @@ const logout = async (req, res) => {
     res.sendStatus(204)
 }
 
-module.exports = { register, login, refresh, logout };
+
+// verify the google id on server side: https://developers.google.com/identity/gsi/web/guides/verify-google-id-token
+
+const googleOAuthLogin = async (req, res) => {
+    const { clientId, credential } = req.body;
+
+    if (!clientId || !credential) return res.status(400).json({ message: 'Argument missing' });
+
+    try {
+        const ticket = await client.verifyIdToken({
+            idToken: credential,
+            audience: clientId,
+        });
+        const { email, name } = ticket.getPayload();
+
+        const foundUser = await User.findOne({ email });
+
+        if (!foundUser) {
+            // create new user
+            const newUser = await User.create({
+                fulname: name,
+                email,
+                password: null,
+            })
+
+
+            const { fullname, _id: userId } = newUser;
+
+            const roles = Object.values(newUser.roles).filter(Boolean)
+
+            const accessToken = jwt.sign(
+                { userInfo: { email, roles, fullname, userId } },
+                process.env.ACCESS_TOKEN_SECRET,
+                { expiresIn: '15m' }
+            )
+
+            const refreshToken = jwt.sign(
+                { email, roles, fullname, userId },
+                process.env.REFRESH_TOKEN_SECRET,
+                { expiresIn: '3d' }
+            )
+            let doc = await User.findOneAndUpdate({ email }, { refreshToken }, { new: true }).exec()
+
+            res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 3600 * 1000, sameSite: 'None', secure: true })
+            res.json({ accessToken })
+            return;
+
+        }
+
+        const { fullname, _id: userId } = foundUser;
+
+        const roles = Object.values(foundUser.roles).filter(Boolean)
+
+
+        console.log({ roles, fullname, _id: userId })
+
+        const accessToken = jwt.sign(
+            { userInfo: { email, roles, fullname, userId } },
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: '15m' }
+        )
+
+        const refreshToken = jwt.sign(
+            { email, roles, fullname, userId },
+            process.env.REFRESH_TOKEN_SECRET,
+            { expiresIn: '3d' }
+        )
+        let doc = await User.findOneAndUpdate({ email }, { refreshToken }, { new: true }).exec()
+
+        res.cookie('jwt', refreshToken, { httpOnly: true, maxAge: 24 * 3600 * 1000, sameSite: 'None', secure: true })
+        res.json({ accessToken })
+
+    } catch (e) {
+        res.status(500).json({
+            message: e.message,
+            status: 'error',
+        })
+    }
+}
+
+module.exports = { register, login, refresh, logout, googleOAuthLogin };
