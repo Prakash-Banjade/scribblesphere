@@ -5,6 +5,7 @@ const clientSecret = process.env.CLIENT_SECRET
 const axios = require('axios')
 
 const oAuth2Client = new OAuth2Client(clientId, clientSecret, 'postmessage');
+const client = new OAuth2Client();
 
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken')
@@ -188,32 +189,46 @@ const logout = async (req, res) => {
 // verify the google id on server side: https://developers.google.com/identity/gsi/web/guides/verify-google-id-token
 
 const googleOAuthLogin = async (req, res) => {
-    const { code } = req.body;
+    const { code, credential } = req.body;
 
-    if (!code) return res.status(400).json({ message: 'Argument missing' });
+    if (!code && !credential) return res.status(400).json({ message: 'Argument missing' });
 
     try {
-        const { tokens } = await oAuth2Client.getToken(code); // exchange code for tokens
-        const access_token = tokens?.access_token
         let user = {};
 
-        // fetching the user info
-        if (access_token) {
-            try {
-                const response = await axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`, {
-                    headers: {
-                        Authorization: `Bearer ${access_token}`,
-                        Accept: 'application/json'
-                    }
-                })
+        // in case for Google OAuth 2.0 authentication flow i.e while using useGoogleLogin() on client
+        if (code) {
+            const { tokens } = await oAuth2Client.getToken(code); // exchange code for tokens
+            const access_token = tokens?.access_token
 
-                user = response.data;
-            } catch (e) {
-                res.json({
-                    message: e.message,
-                    status: 'error'
-                })
+            // fetching the user info
+            if (access_token) {
+                try {
+                    const response = await axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`, {
+                        headers: {
+                            Authorization: `Bearer ${access_token}`,
+                            Accept: 'application/json'
+                        }
+                    })
+
+                    user = response.data;
+                } catch (e) {
+                    res.json({
+                        message: e.message,
+                        status: 'error'
+                    })
+                }
             }
+        }
+
+        // in case for use of google one tap api i.e. while using useGoogleOneTapLogin() on client
+        if (credential) {
+            const ticket = await client.verifyIdToken({
+                idToken: credential,
+                audience: clientId,
+            });
+            const payload = ticket.getPayload();
+            user = payload;
         }
 
         const { email, verified_email, name, picture } = user;
