@@ -1,9 +1,10 @@
 const User = require("../model/User");
 const { OAuth2Client } = require('google-auth-library');
 const clientId = process.env.CLIENT_ID
-const { v4: uuid } = require('uuid')
+const clientSecret = process.env.CLIENT_SECRET
+const axios = require('axios')
 
-const client = new OAuth2Client(clientId);
+const oAuth2Client = new OAuth2Client(clientId, clientSecret, 'postmessage');
 
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken')
@@ -139,7 +140,7 @@ const login = async (req, res) => {
 
 const refresh = async (req, res) => {
     const cookies = req.cookies;
-    if (!cookies?.jwt) return res.sendStatus(401); 
+    if (!cookies?.jwt) return res.sendStatus(401);
     const refreshToken = cookies.jwt;
 
     const foundUser = await User.findOne({ refreshToken }).exec();
@@ -187,23 +188,45 @@ const logout = async (req, res) => {
 // verify the google id on server side: https://developers.google.com/identity/gsi/web/guides/verify-google-id-token
 
 const googleOAuthLogin = async (req, res) => {
-    const { clientId, credential } = req.body;
+    const { code } = req.body;
 
-    if (!clientId || !credential) return res.status(400).json({ message: 'Argument missing' });
+    if (!code) return res.status(400).json({ message: 'Argument missing' });
 
     try {
-        const ticket = await client.verifyIdToken({
-            idToken: credential,
-            audience: clientId,
-        });
-        const { email, name } = ticket.getPayload();
+        const { tokens } = await oAuth2Client.getToken(code); // exchange code for tokens
+        const access_token = tokens?.access_token
+        let user = {};
+
+        // fetching the user info
+        if (access_token) {
+            try {
+                const response = await axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`, {
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                        Accept: 'application/json'
+                    }
+                })
+
+                user = response.data;
+            } catch (e) {
+                res.json({
+                    message: e.message,
+                    status: 'error'
+                })
+            }
+        }
+
+        const { email, verified_email, name, picture } = user;
+
+        if (!verified_email) return res.status(401).json({ message: 'email address is not verified' })
 
         const foundUser = await User.findOne({ email });
 
+        // if the user is new, create the user in database
         if (!foundUser) {
             // create new user
             const newUser = await User.create({
-                fulname: name,
+                fullname: name,
                 email,
                 password: null,
             })
@@ -232,12 +255,10 @@ const googleOAuthLogin = async (req, res) => {
 
         }
 
+        // if the user already exists directly login the user
         const { fullname, _id: userId } = foundUser;
 
         const roles = Object.values(foundUser.roles).filter(Boolean)
-
-
-        console.log({ roles, fullname, _id: userId })
 
         const accessToken = jwt.sign(
             { userInfo: { email, roles, fullname, userId } },
