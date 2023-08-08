@@ -1,5 +1,8 @@
 const User = require("../model/User.js");
 const sharp = require('sharp');
+const getDataUri = require('../utils/dataUri.js')
+const path = require('path')
+const cloudinary = require('cloudinary')
 
 
 const getAllUsers = async (req, res) => {
@@ -119,8 +122,8 @@ const setProfilePic = async (req, res) => {
   if (!foundUser) return res.status(401).json({ message: 'Unauthorized' })
 
   // Set the desired image dimensions and quality
-  const width = 200;
-  const height = 200;
+  const width = 300;
+  const height = 300;
   const quality = 80; // Set your desired quality (0 to 100)
 
   // Resize and compress the image using sharp
@@ -129,10 +132,16 @@ const setProfilePic = async (req, res) => {
     .jpeg({ quality })
     .toBuffer();
 
+  // setting file Uri using datauri
+  const fileName = path.extname(file.originalname).toString()
+  const fileUri = getDataUri(fileName, resizedImage); // any file name, buffer
+
+  const myCloud = await cloudinary.v2.uploader.upload(fileUri.content);
+  console.log(myCloud.secure_url)
+
   try {
-    foundUser.profile.name = file.originalname
-    foundUser.profile.data = resizedImage
-    foundUser.profile.type = file.mimetype
+    foundUser.profile.public_id = myCloud.public_id
+    foundUser.profile.url = myCloud.secure_url;
     await foundUser.save();
 
     res.json({ message: 'Profile picture added', status: 200 })
@@ -150,9 +159,9 @@ const getProfilePic = async (req, res) => {
 
   if (!foundUser) return res.status(401).json({ message: 'Unauthorized to get profile picture' });
 
-  const pp = foundUser.profile;
+  const image_url = foundUser.profile.url;
 
-  res.json(pp);
+  res.json(image_url);
 }
 
 const removeProfilePic = async (req, res) => {
@@ -163,9 +172,8 @@ const removeProfilePic = async (req, res) => {
   if (!foundUser) return res.status(401).json({ message: 'You are unauthorized to remove any image' })
 
   try {
-    foundUser.profile.name = 'Profile'
-    foundUser.profile.data = null
-    foundUser.profile.type = ''
+    foundUser.profile.public_id = null
+    foundUser.profile.url = null
 
     await foundUser.save();
     res.json({ message: 'Removed Successfully', status: 200 })

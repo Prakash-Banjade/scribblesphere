@@ -3,6 +3,8 @@ const { OAuth2Client } = require('google-auth-library');
 const clientId = process.env.CLIENT_ID
 const clientSecret = process.env.CLIENT_SECRET
 const axios = require('axios')
+const { v4: uuid } = require('uuid')
+
 
 const oAuth2Client = new OAuth2Client(clientId, clientSecret, 'postmessage');
 const client = new OAuth2Client();
@@ -106,7 +108,6 @@ const login = async (req, res) => {
     }
 
     const userId = foundUser._id;
-    console.log(userId)
     // evaluating the password
     const isPwdMatch = await bcrypt.compare(pwd, foundUser.password)
 
@@ -232,6 +233,7 @@ const googleOAuthLogin = async (req, res) => {
         }
 
         const { email, name, picture } = user;
+        console.log(picture)
 
         // if (!verified_email) return res.status(401).json({ message: 'email address is not verified', user: user })
 
@@ -244,6 +246,10 @@ const googleOAuthLogin = async (req, res) => {
                 fullname: name,
                 email,
                 password: null,
+                profile: {
+                    public_id: uuid(),
+                    url: picture,
+                }
             })
 
 

@@ -12,18 +12,14 @@ const userSchema = new Schema({
     required: true,
   },
   profile: {
-    name: {
+    public_id: {
       type: String,
       default: 'Profile'
     },
-    data: {
-      type: Buffer,
-      default: null
-    },
-    type: {
+    url: {
       type: String,
-      default: ''
-    },
+      default: null
+    }
   },
   roles: {
     User: {

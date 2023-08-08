@@ -5,8 +5,8 @@ const verifyJWTs = require('../middlewares/verifyJWTs.js');
 router.use(verifyJWTs)
 router.post('/', profilePicUpload, async (req, res) => {
     const file = req.file;
-    // console.log(req.body)
     if (!file) return res.status(400).json({ message: 'No files served' });
+    console.log('originalFileContent' + file.content)
 
     const userEmail = req.email;
     const foundUser = await User.findOne({ email: userEmail }).exec();
@@ -23,7 +23,7 @@ router.post('/', profilePicUpload, async (req, res) => {
         .jpeg({ quality })
         .toBuffer();
 
-    console.log(resizedImage)
+    console.log('resizedFile' + resizedImage)
 
     try {
         foundUser.profile.name = file.originalname
@@ -39,4 +39,4 @@ router.post('/', profilePicUpload, async (req, res) => {
 
 
 
-module.exports = router;
+// module.exports = router;

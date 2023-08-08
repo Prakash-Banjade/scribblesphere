@@ -14,6 +14,6 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const profilePicUpload = multer({ storage, fileFilter }).single('image');
+const profilePicUpload = multer({ storage, fileFilter, limits: { fileSize: 3 * 1024 * 1024 } }).single('image');
 
 module.exports = profilePicUpload;
