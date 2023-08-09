@@ -4,7 +4,8 @@ const clientId = process.env.CLIENT_ID
 const clientSecret = process.env.CLIENT_SECRET
 const axios = require('axios')
 const { v4: uuid } = require('uuid')
-
+const send_mail = require('../utils/Mail.js')
+const generateOtpAndSave = require('../utils/generateOtpAndSave.js')
 
 const oAuth2Client = new OAuth2Client(clientId, clientSecret, 'postmessage');
 const client = new OAuth2Client();
@@ -12,67 +13,23 @@ const client = new OAuth2Client();
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken')
 
-const register = async (req, res) => {
-    const { email, pwd, fullname } = req.body;
-    const pwdRegex = new RegExp(process.env.PASSWORD_REGEX);
-    const emailRegex = new RegExp(process.env.EMAIL_REGEX);
-    const fullnameRegex = new RegExp(process.env.FULLNAME_REGEX);
+const generateOtp = async (req, res) => {
+    const { email, fullname, pwd } = req.body; // email, fullname and password are validated by the middleware
 
-    if (!email || !pwd || !fullname)
-        return res.status(400).json({
-            error: true,
-            message: "Full name, email and password are required",
-        });
-
-    const userExists = await User.findOne({ email }).exec();
-    if (userExists)
-        return res.status(409).json({
-            error: true,
-            message: "An account already existed with this email. Head to login",
-            type: "Duplicate email",
-        });
-
-    if (!fullnameRegex.test(fullname)) {
-        return res.status(400).json({
-            "message": "Enter a valid full name",
-            "type": "Invalid fullname"
+    try {
+        const OTP = await generateOtpAndSave(email, fullname, pwd);
+        send_mail(fullname, email, OTP);
+        res.json({
+            message: `An OTP has been sent to ${email}. Use OTP below to continue the registration.`,
+            status: 'success',
         })
+    } catch (e) {
+        res.status(500).json({ message: e.message, status: 'error' })
     }
+};
 
-
-
-    if (!emailRegex.test(email)) {
-        return res.status(400).json({
-            error: true,
-            message: "Enter a valid email",
-            type: "Invalid email",
-        });
-    }
-
-    let pwdErrMsg;
-
-    if (!pwdRegex.test(pwd)) {
-        if (pwd.length < 8) {
-            pwdErrMsg = "Password must be at least 8 characters long.";
-        } else if (!pwd.match(/[a-z]/)) {
-            pwdErrMsg = "Password must contain at least one lowercase letter.";
-        } else if (!pwd.match(/[A-Z]/)) {
-            pwdErrMsg = "Password must contain at least one uppercase letter.";
-        } else if (!pwd.match(/\d/)) {
-            pwdErrMsg = "Password must contain at least one digit.";
-        } else if (!pwd.match(/[@#$%^&+=*!]/)) {
-            pwdErrMsg =
-                "Password must contain at least one special character (@#$%^&+=*!).";
-        } else {
-            //   pwdErrMsg = "");
-        }
-        return res.status(422).json({
-            "message": "Password validation failed",
-            "type": "Invalid password",
-            "pwdCorrectionMsg": pwdErrMsg
-        });
-    }
-
+const register = async (req, res) => {
+    const { fullname, email, pwd } = req; // these values are fetched and set from database and by verifyOTP middleware;
     try {
         const newUser = await User.create({
             fullname,
@@ -82,7 +39,7 @@ const register = async (req, res) => {
 
         res.status(201).json({
             message: "User registered successfully",
-            user: newUser,
+            status: 'success',
         });
     } catch (e) {
         res.status(500).json({
@@ -90,7 +47,7 @@ const register = async (req, res) => {
             message: `${e.message}`,
         });
     }
-};
+}
 
 const login = async (req, res) => {
     const { email, pwd } = req.body
@@ -305,4 +262,4 @@ const googleOAuthLogin = async (req, res) => {
     }
 }
 
-module.exports = { register, login, refresh, logout, googleOAuthLogin };
+module.exports = { register, generateOtp, login, refresh, logout, googleOAuthLogin };
