@@ -6,13 +6,7 @@ const frontEndUrl = [
 ];
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    if (frontEndUrl.includes(origin) || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error(`${origin} blocked by CORS policy`));
-    }
-  },
+  origin: '*',
   credentials: true,
   optionsSuccessStatus: 200,
 };
