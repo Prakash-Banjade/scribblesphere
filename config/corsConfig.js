@@ -7,7 +7,7 @@ const frontEndUrl = [
 
 const corsOptions = {
   origin: '*',
-  credentials: true,
+  // credentials: true,
   optionsSuccessStatus: 200,
 };
 
