@@ -24,17 +24,20 @@ function send_mail(name, recepient, otp) {
     const mail_options = {
         from: `VERIFICATION ${process.env.CLIENT_EMAIL}`,
         to: recepient,
-        subject: 'ScribbleSphere sign up OTP',
+        subject: `${otp} is your ScribbleSphere registration code`,
         html: html_message(name, otp),
     }
 
     transport.sendMail(mail_options, (err, result) => {
         if (err) {
             console.log('Error: ', err)
+        } else {
+            console.log('result:', result)
         }
 
         transport.close();
     })
+
 }
 
 function html_message(user, otp) {
