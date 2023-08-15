@@ -6,7 +6,7 @@ const cloudinary = require('cloudinary')
 
 
 const getAllUsers = async (req, res) => {
-  const users = await User.find().select("-password");
+  const users = await User.find().lean().select("-password -refreshToken -email -roles");
 
   if (!users || !users.length)
     return res.json({ message: "No users registered" });
@@ -37,7 +37,7 @@ const deleteUser = async (req, res) => {
 const getUserById = async (req, res) => {
   const id = req.params.id;
 
-  const foundUser = await User.findById(id).exec();
+  const foundUser = await User.findById(id).lean().select("-password -refreshToken").exec();
 
   if (!foundUser)
     return res.status(404).json({

@@ -24,7 +24,7 @@ const generateOtp = async (req, res) => {
             status: 'success',
         })
     } catch (e) {
-        res.status(500).json({ message: e.message, status: 'error' })
+        res.status(500).json({ message: e.message, status: 'error', isError: true })
     }
 };
 
@@ -45,6 +45,7 @@ const register = async (req, res) => {
         res.status(500).json({
             error: true,
             message: `${e.message}`,
+            isError: true
         });
     }
 }
@@ -61,7 +62,7 @@ const login = async (req, res) => {
     const foundUser = await User.findOne({ email }).exec()
     if (!foundUser) {
         // return res.sendStatus(401) // unauthorized
-        return res.status(401).json({ message: `Invalid Email` }) // unauthorized
+        return res.status(401).json({ message: `Invalid Email`, isError: true }) // unauthorized
     }
 
     const userId = foundUser._id;
@@ -92,7 +93,8 @@ const login = async (req, res) => {
     } else {
         res.status(401).json({
             error: true,
-            message: 'Incorrect password'
+            message: 'Incorrect password',
+            isError: true
         })
     }
 }
@@ -149,7 +151,7 @@ const logout = async (req, res) => {
 const googleOAuthLogin = async (req, res) => {
     const { code, credential } = req.body;
 
-    if (!code && !credential) return res.status(400).json({ message: 'Argument missing' });
+    if (!code && !credential) return res.status(400).json({ message: 'Argument missing', isError: true });
 
     try {
         let user = {};
@@ -258,6 +260,7 @@ const googleOAuthLogin = async (req, res) => {
         res.status(500).json({
             message: e.message,
             status: 'error',
+            isError: true
         })
     }
 }
