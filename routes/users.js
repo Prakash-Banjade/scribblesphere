@@ -20,6 +20,6 @@ router.get('/upload/:userId', verifyJWTs, getProfilePic);
 router.delete('/upload', verifyJWTs, removeProfilePic);
 router.get("/:id", getUserById);
 
-// router.route("/").get(getAllUsers).delete(verifyJWTs, deleteUser); // attatch verifyJWTs middleware in delete route
+router.route("/").get(getAllUsers).delete(verifyJWTs, deleteUser); // attatch verifyJWTs middleware in delete route
 
 module.exports = router;

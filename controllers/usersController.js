@@ -37,7 +37,7 @@ const deleteUser = async (req, res) => {
 const getUserById = async (req, res) => {
   const id = req.params.id;
 
-  const foundUser = await User.findById(id).lean().select("-password -refreshToken").exec();
+  const foundUser = await User.findById(id).lean().select("-password -refreshToken -email -roles").exec();
 
   if (!foundUser)
     return res.status(404).json({
