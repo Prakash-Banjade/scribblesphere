@@ -5,6 +5,7 @@ const {
   deleteUser,
   setMyDetails,
   getMyDetails,
+  getUserArticles,
   setProfilePic,
   getProfilePic,
   removeProfilePic
@@ -18,6 +19,7 @@ router.patch("/editmydetails", verifyJWTs, setMyDetails);
 router.post('/upload', [profilePicUpload, verifyJWTs], setProfilePic) // attatch verifyJWTs middleware
 router.get('/upload/:userId', verifyJWTs, getProfilePic);
 router.delete('/upload', verifyJWTs, removeProfilePic);
+router.get('/:id/articles', getUserArticles)
 router.get("/:id", getUserById);
 
 router.route("/").get(getAllUsers).delete(verifyJWTs, deleteUser); // attatch verifyJWTs middleware in delete route

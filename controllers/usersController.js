@@ -1,4 +1,5 @@
 const User = require("../model/User.js");
+const Article = require("../model/article.js");
 const sharp = require('sharp');
 const getDataUri = require('../utils/dataUri.js')
 const path = require('path')
@@ -112,6 +113,34 @@ const setMyDetails = async (req, res) => {
   }
 };
 
+const getUserArticles = async (req, res) => {
+  const limit = req?.query.limit || 0;
+  const userId = req.params?.id;
+
+  if (!userId) return res.status(400).json({ message: 'User id is required', status: 'error' })
+
+  try {
+    const articles = await Article.find({})
+      .where("author")
+      .equals(userId)
+      .limit(limit)
+      .populate({
+        path: "author",
+        select: "-password -refreshToken -roles",
+      })
+      .exec();
+
+    if (!articles) return res.status(404).json({ message: "No articles found for the requested user", status: 'error' })
+
+    const sortedArticles = [...articles].reverse();
+    res.json(sortedArticles);
+  } catch (e) {
+    res.status(500).json({
+      message: e.message,
+    });
+  }
+};
+
 const setProfilePic = async (req, res) => {
   const file = req.file;
   // console.log(req.body)
@@ -186,4 +215,4 @@ const removeProfilePic = async (req, res) => {
   }
 }
 
-module.exports = { getAllUsers, getUserById, deleteUser, getMyDetails, setMyDetails, setProfilePic, getProfilePic, removeProfilePic };
+module.exports = { getAllUsers, getUserById, deleteUser, getUserArticles, getMyDetails, setMyDetails, setProfilePic, getProfilePic, removeProfilePic };

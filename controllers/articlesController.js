@@ -162,37 +162,6 @@ const findArticleById = async (req, res) => {
   res.json(foundArticle);
 };
 
-const getUserArticles = async (req, res) => {
-  const email = req?.email;
-  const limit = req?.query.limit || 0;
-
-  try {
-    const foundUser = await User.findOne({ email }).select("-password -refreshToken -roles").exec();
-
-    if (!foundUser)
-      return res.status(403).json({
-        message: "Requesting user doesn't exist",
-      });
-
-    const articles = await Article.find({})
-      .where("author")
-      .equals(foundUser._id)
-      .limit(limit)
-      .populate({
-        path: "author",
-        select: "-password -refreshToken -email -roles",
-      })
-      .exec();
-
-    const sortedArticles = [...articles].reverse();
-    res.json(sortedArticles);
-  } catch (e) {
-    res.status(500).json({
-      message: e.message,
-    });
-  }
-};
-
 const postComment = async (req, res) => {
   const articleId = req.params.id;
   const { comment } = req.body;
@@ -268,7 +237,6 @@ module.exports = {
   updateArticle,
   deleteArticle,
   findArticleById,
-  getUserArticles,
   postComment,
   searchArticle,
 };
