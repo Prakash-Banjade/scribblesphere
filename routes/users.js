@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const {
-  getAllUsers,
+  getAllUsers_private,
   getUserById,
   deleteUser,
   setMyDetails,
@@ -8,7 +8,8 @@ const {
   getUserArticles,
   setProfilePic,
   getProfilePic,
-  removeProfilePic
+  removeProfilePic,
+  toggleFollow
 } = require("../controllers/usersController.js");
 const verifyJWTs = require("../middlewares/verifyJWTs.js");
 const profilePicUpload = require('../middlewares/profilePicUpload.js');
@@ -16,12 +17,16 @@ const profilePicUpload = require('../middlewares/profilePicUpload.js');
 
 router.get("/getmydetails", verifyJWTs, getMyDetails);
 router.patch("/editmydetails", verifyJWTs, setMyDetails);
-router.post('/upload', [profilePicUpload, verifyJWTs], setProfilePic) // attatch verifyJWTs middleware
+router.post('/upload', [profilePicUpload, verifyJWTs], setProfilePic)
+router.patch('/follower', verifyJWTs, toggleFollow)
 router.get('/upload/:userId', verifyJWTs, getProfilePic);
 router.delete('/upload', verifyJWTs, removeProfilePic);
-router.get('/:id/articles', getUserArticles)
-router.get("/:id", getUserById);
 
-router.route("/").get(getAllUsers).delete(verifyJWTs, deleteUser); // attatch verifyJWTs middleware in delete route
+
+
+router.get('/:id/articles', getUserArticles)
+router.get("/:id", verifyJWTs, getUserById);
+
+router.route("/").get(verifyJWTs, getAllUsers_private).delete(verifyJWTs, deleteUser);
 
 module.exports = router;

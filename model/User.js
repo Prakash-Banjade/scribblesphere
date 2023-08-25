@@ -59,7 +59,19 @@ const userSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   }],
+  connections: [
+    {
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+      status: {
+        type: String,
+        default: 'not-connected' // not-connected | connected | pending
+      }
+    }
+  ],
   refreshToken: String,
-}, {timestamps: true});
+}, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);

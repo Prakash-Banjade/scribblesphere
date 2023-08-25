@@ -4,15 +4,37 @@ const sharp = require('sharp');
 const getDataUri = require('../utils/dataUri.js')
 const path = require('path')
 const cloudinary = require('cloudinary')
+const ObjectId = require('mongoose').Types.ObjectId;
 
 
-const getAllUsers = async (req, res) => {
-  const users = await User.find().lean().select("-password -refreshToken -email -roles");
+const getAllUsers_private = async (req, res) => {
+  try {
+    const currUserId = req.userId;
+    if (!currUserId) return res.status(401).json({ message: "Unauthorized to access users", status: 'error' });
 
-  if (!users || !users.length)
-    return res.json({ message: "No users registered" });
+    // fetching users from data base except the current one -> $ne = not equal
+    const users = await User.find({ _id: { $ne: currUserId } }).lean().select("-password -refreshToken -email -roles");
 
-  res.json(users);
+    // const result = await User.updateMany({}, { followers: [], following: [] })
+
+    const currUser = await User.findById(currUserId).exec();
+    if (!currUser) return res.status(404).json({ message: "Requesting user doesn't exist", status: 'error' })
+
+    const filteredUsers = users.map(user => {
+      const mutualConnects = user.connections.map(connect => currUser.connections.includes(connect) && connect).filter(Boolean);
+
+      const isFollowing = user.followers.some(followerId => followerId.equals(currUserId));
+
+      if (user._id !== currUserId) {
+        return { ...user, isFollowing, mutualConnects };
+      }
+    }).filter(Boolean);
+
+
+    res.json(filteredUsers);
+  } catch (e) {
+    res.status(500).json({ message: e.message, status: 'error' })
+  }
 };
 
 const deleteUser = async (req, res) => {
@@ -36,16 +58,28 @@ const deleteUser = async (req, res) => {
 };
 
 const getUserById = async (req, res) => {
-  const id = req.params.id;
+  try {
+    const id = req.params.id;
+    const currUserId = req.userId;
+    if (!currUserId) return res.status(401).json({ message: "Unauthorized to access users", status: 'error' });
 
-  const foundUser = await User.findById(id).lean().select("-password -refreshToken -email -roles").exec();
+    const currUser = await User.findById(currUserId).exec();
+    if (!currUser) return res.status(404).json({ message: "Requesting user doesn't exist", status: 'error' })
 
-  if (!foundUser)
-    return res.status(404).json({
-      message: "No user found with this id",
-    });
+    const foundUser = await User.findById(id).lean().select("-password -refreshToken -email -roles").populate({ path: 'following', select: "-password -refreshToken -email -roles" }).exec();
+    if (!foundUser) return res.status(404).json({ message: "No user found with this id", status: 'error' });
 
-  res.json(foundUser);
+    const isFollowing = foundUser.followers.some(followerId => followerId.equals(currUserId));
+
+    const mutualConnects = foundUser.connections.map(connect => currUser.connections.includes(connect) && connect).filter(Boolean);
+
+    // await User.updateMany({}, { connections: [] });
+
+    res.json({ ...foundUser, isFollowing, mutualConnects });
+
+  } catch (e) {
+    res.status(500).json({ message: e.message, status: 'error' })
+  }
 };
 
 const getMyDetails = async (req, res) => {
@@ -215,4 +249,52 @@ const removeProfilePic = async (req, res) => {
   }
 }
 
-module.exports = { getAllUsers, getUserById, deleteUser, getUserArticles, getMyDetails, setMyDetails, setProfilePic, getProfilePic, removeProfilePic };
+const toggleFollow = async (req, res) => {
+  try {
+    const followedUserId = req.body.id;
+    const followerId = req.userId;
+
+    if (!followedUserId) {
+      return res.status(400).json({ message: 'Followed user must be specified', status: 'error' });
+    }
+    if (!followerId) {
+      return res.status(401).json({ message: 'Unauthorized to toggle follow status', status: 'error' });
+    }
+
+    const followedUser = await User.findById(followedUserId);
+    const follower = await User.findById(followerId);
+
+    if (!followedUser) {
+      return res.status(404).json({ message: 'Requested user not found', status: 'error' });
+    }
+    if (!follower) {
+      return res.status(404).json({ message: 'Follower not found', status: 'error' });
+    }
+
+    const followerIndex = followedUser.followers.indexOf(followerId);
+    const followingIndex = follower.following.indexOf(followedUserId);
+
+    if (followerIndex === -1 && followingIndex === -1) {
+      // Neither following nor a follower, so add both
+      followedUser.followers.push(followerId);
+      follower.following.push(followedUserId);
+    } else {
+      // Either following or a follower, so remove both
+      if (followerIndex !== -1) {
+        followedUser.followers.splice(followerIndex, 1);
+      }
+      if (followingIndex !== -1) {
+        follower.following.splice(followingIndex, 1);
+      }
+    }
+
+    await Promise.all([followedUser.save(), follower.save()]);
+
+    const message = followerIndex === -1 ? 'Successfully added to interests' : 'Successfully removed from interests';
+    res.json({ message, status: 'success' });
+  } catch (error) {
+    res.status(500).json({ message: error.message, status: 'error' });
+  }
+}
+
+module.exports = { getAllUsers_private, getUserById, deleteUser, getUserArticles, getMyDetails, setMyDetails, setProfilePic, getProfilePic, removeProfilePic, toggleFollow };
