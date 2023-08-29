@@ -8,7 +8,7 @@ const {
   postComment,
   searchArticle
 } = require("../../controllers/articlesController.js");
-const verifyJWTs = require("../../middlewares/verifyJWTs.js");
+const { verifyJWTs } = require("../../middlewares/verifyJWTs.js");
 
 router.use(verifyJWTs);
 

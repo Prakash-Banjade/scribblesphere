@@ -11,7 +11,7 @@ const {
   removeProfilePic,
   toggleFollow
 } = require("../controllers/usersController.js");
-const verifyJWTs = require("../middlewares/verifyJWTs.js");
+const { verifyJWTs } = require("../middlewares/verifyJWTs.js");
 const profilePicUpload = require('../middlewares/profilePicUpload.js');
 
 

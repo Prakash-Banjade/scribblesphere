@@ -1,7 +1,9 @@
 require('dotenv').config();
 require('express-async-errors')
 const express = require("express");
+const http = require('http');
 const server = express();
+const httpServer = http.createServer(server);
 
 const path = require('path')
 const { logger, logEvents } = require('./utils/logger')
@@ -11,6 +13,16 @@ const ConnectDB = require("./config/dbConfiguration.js");
 const corsPolicy = require('./config/corsConfig.js')
 const cookieParser = require('cookie-parser')
 const cloudinary = require('cloudinary')
+const { verifySocketJWTs } = require('./middlewares/verifyJWTs')
+const { sendConnectRequest } = require('./controllers/userSocketController')
+
+
+const { Server } = require("socket.io");
+const io = new Server(httpServer, {
+  cors: {
+    origin: ['http://localhost:5173']
+  }
+});
 
 ConnectDB();
 cloudinary.v2.config({
@@ -21,7 +33,7 @@ cloudinary.v2.config({
 
 const PORT = process.env.PORT || 3500;
 
-server.use(express.json({limit: '50mb'}));
+server.use(express.json({ limit: '50mb' }));
 server.use(cookieParser())
 
 server.use(corsPolicy);
@@ -33,6 +45,18 @@ server.get('/', (req, res) => {
 server.use("/auth", require('./routes/auth.js'))
 server.use("/articles", require('./routes/api/articles.js'));
 server.use("/users", require('./routes/users.js'));
+
+// socket.io implementation
+io.use(verifySocketJWTs)
+
+io.on('connection', socket => {
+  socket.join(socket.userId);
+
+  console.log('a new user connected with id: ', socket.fullname)
+
+  socket.on('send_connect_req', (id, cb) => sendConnectRequest({ id, cb }, socket));
+})
+
 
 server.all('*', (req, res) => {
   res.status(404)
@@ -49,7 +73,7 @@ server.use(errorHandler)
 
 
 mongoose.connection.once('open', () => {
-  server.listen(PORT, () => {
+  httpServer.listen(PORT, () => {
     console.log(`Server is listening at port ${PORT}`);
   });
   console.log("Connected to Mongo");

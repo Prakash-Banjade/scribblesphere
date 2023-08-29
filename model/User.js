@@ -67,7 +67,7 @@ const userSchema = new Schema({
       },
       status: {
         type: String,
-        default: 'not-connected' // not-connected | connected | pending
+        default: 'pending' // connected | pending
       }
     }
   ],

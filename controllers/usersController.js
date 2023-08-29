@@ -92,7 +92,7 @@ const getMyDetails = async (req, res) => {
 
   try {
     const details = await User.findOne({ email: reqEmail })
-      .select("details followers following profile")
+      .select("details followers following profile connections").populate({ path: 'connections.user', select: "-password -refreshToken -email -roles" })
       .exec();
 
     if (!details) return res.sendStatus(403);
@@ -296,5 +296,7 @@ const toggleFollow = async (req, res) => {
     res.status(500).json({ message: error.message, status: 'error' });
   }
 }
+
+
 
 module.exports = { getAllUsers_private, getUserById, deleteUser, getUserArticles, getMyDetails, setMyDetails, setProfilePic, getProfilePic, removeProfilePic, toggleFollow };

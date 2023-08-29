@@ -192,7 +192,7 @@ const googleOAuthLogin = async (req, res) => {
         }
 
         const { email, name, picture } = user;
-        console.log(picture)
+        // console.log(picture)
 
         // if (!verified_email) return res.status(401).json({ message: 'email address is not verified', user: user })
 

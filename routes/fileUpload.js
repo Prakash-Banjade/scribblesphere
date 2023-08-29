@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const User = require('../model/User.js');
-const verifyJWTs = require('../middlewares/verifyJWTs.js');
+const { verifyJWTs } = require('../middlewares/verifyJWTs.js');
 
 router.use(verifyJWTs)
 router.post('/', profilePicUpload, async (req, res) => {

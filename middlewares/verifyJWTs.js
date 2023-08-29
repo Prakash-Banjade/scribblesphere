@@ -24,6 +24,25 @@ const verifyJWTs = (req, res, next) => {
     )
 }
 
-module.exports = verifyJWTs
+const verifySocketJWTs = (socket, next) => {
+    const token = socket.handshake.auth.token;
+
+    jwt.verify(
+        token,
+        process.env.ACCESS_TOKEN_SECRET,
+        (err, decoded) => {
+            if (err) next(new Error(`Forbidden as token doesn't match`)) // forbidden - invalid token || doesn't received token
+            else {
+
+                socket.userId = decoded.userInfo.userId;
+                socket.fullname = decoded.userInfo.fullname;
+
+                next();
+            }
+        }
+    )
+}
+
+module.exports = { verifyJWTs, verifySocketJWTs }
 
 
