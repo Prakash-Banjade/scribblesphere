@@ -105,6 +105,8 @@ const getConnectStatus = async (e, socket) => {
 
         cb({ status: 200, data: status?.status || 'not-connected' });
 
+        // await User.updateMany({}, {conversations: []}).exec()
+
     } catch (e) {
         emitError(socket, e.message);
         cb({ status: 500, message: 'Error occurred', data: null });

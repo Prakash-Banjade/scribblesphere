@@ -98,7 +98,7 @@ const getMyDetails = async (req, res) => {
 
   try {
     const details = await User.findById(userId)
-      .select("details followers following profile connections sentRequest").populate({ path: 'connections.user', select: "-password -refreshToken -email -roles" }).populate({ path: 'sentRequest.user', select: "-password -refreshToken -email -roles" })
+      .select("details followers following profile connections sentRequest conversations").populate({ path: 'connections.user', select: "-password -refreshToken -email -roles" }).populate({ path: 'sentRequest.user', select: "-password -refreshToken -email -roles" }).populate({path: 'conversations.user', select: "-password -refreshToken -email -roles"})
       .exec();
 
     if (!details) return res.sendStatus(403);
@@ -123,7 +123,7 @@ const setMyDetails = async (req, res) => {
     });
 
   try {
-    const foundUser = await User.findById( userId )
+    const foundUser = await User.findById(userId)
       .select("-password -roles -refreshToken")
       .exec();
 
@@ -303,6 +303,44 @@ const toggleFollow = async (req, res) => {
   }
 }
 
+const addToConversation = async (req, res) => {
+  try {
+    const { id } = req.body;
+
+    if (!id) return res.status(400).json({ message: 'Id of the user to be added is required', status: 'error' })
+
+    const currentUser = await User.findById(req.userId).exec();
+    const userToBeAdded = await User.findById(id).exec();
+
+    if (!currentUser || !userToBeAdded) return res.status(404).json({ message: 'Invalid user(s) or user(s) not found.', status: 'error' });
+
+    const conversationExists = currentUser.conversations.some(conv => conv.user.equals(id))
+    if (conversationExists) return res.status(400).json({ message: 'Conversation already exists', status: 'error' })
+
+    const newConversation = {
+      user: id,
+      messages: []
+    }
+
+    currentUser.conversations.push(newConversation)
+
+    await currentUser.save();
+
+    res.status(200).json({
+      message: 'added to conversation',
+      status: 'success'
+    })
+
+  } catch (e) {
+    console.log(e.message)
+    res.status(500).json({
+      message: e.message,
+      status: 500,
+    })
+  }
+
+}
 
 
-module.exports = { getAllUsers_private, getUserById, deleteUser, getUserArticles, getMyDetails, setMyDetails, setProfilePic, getProfilePic, removeProfilePic, toggleFollow };
+
+module.exports = { getAllUsers_private, getUserById, deleteUser, getUserArticles, getMyDetails, setMyDetails, setProfilePic, getProfilePic, removeProfilePic, toggleFollow, addToConversation };

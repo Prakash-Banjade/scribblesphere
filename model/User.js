@@ -16,6 +16,17 @@ const connectionSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
+const singleMessageSchema = new mongoose.Schema({
+  self: {
+    type: Boolean,
+    required: true,
+  },
+  text: {
+    type: String,
+    required: true,
+  }
+}, { timestamps: true })
+
 
 const userSchema = new Schema({
   email: {
@@ -76,6 +87,20 @@ const userSchema = new Schema({
   }],
   connections: [connectionSchema],
   sentRequest: [connectionSchema],
+  conversations: [
+    {
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+      },
+      seen: {
+        type: Boolean,
+        default: false,
+      },
+      messages: [singleMessageSchema]
+    }
+  ],
   refreshToken: String,
 }, { timestamps: true });
 
