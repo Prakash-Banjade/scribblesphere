@@ -1,7 +1,22 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
+
 // creating mongoose schema
+
+const connectionSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
+  status: {
+    type: String,
+    default: 'pending' // connected | pending
+  },
+
+}, { timestamps: true });
+
+
 const userSchema = new Schema({
   email: {
     type: String,
@@ -59,18 +74,8 @@ const userSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   }],
-  connections: [
-    {
-      user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-      },
-      status: {
-        type: String,
-        default: 'pending' // connected | pending
-      }
-    }
-  ],
+  connections: [connectionSchema],
+  sentRequest: [connectionSchema],
   refreshToken: String,
 }, { timestamps: true });
 

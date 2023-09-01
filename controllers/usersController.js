@@ -66,16 +66,22 @@ const getUserById = async (req, res) => {
     const currUser = await User.findById(currUserId).exec();
     if (!currUser) return res.status(404).json({ message: "Requesting user doesn't exist", status: 'error' })
 
-    const foundUser = await User.findById(id).lean().select("-password -refreshToken -email -roles").populate({ path: 'following', select: "-password -refreshToken -email -roles" }).exec();
+    const foundUser = await User.findById(id).populate({ path: 'following', select: "-password -refreshToken -email -roles" }).exec();
     if (!foundUser) return res.status(404).json({ message: "No user found with this id", status: 'error' });
+    // console.log(foundUser)
+
 
     const isFollowing = foundUser.followers.some(followerId => followerId.equals(currUserId));
+    const connectRequest = foundUser.connections?.find(conn => conn?.user?._id)?.status || 'not-connected'
+    // console.log(connectRequest)
 
     const mutualConnects = foundUser.connections.map(connect => currUser.connections.includes(connect) && connect).filter(Boolean);
 
     // await User.updateMany({}, { connections: [] });
 
-    res.json({ ...foundUser, isFollowing, mutualConnects });
+    // console.log({ ...foundUser, isFollowing, mutualConnects })
+
+    res.json({ ...foundUser._doc, isFollowing, mutualConnects, connectRequest });
 
   } catch (e) {
     res.status(500).json({ message: e.message, status: 'error' })
@@ -83,16 +89,16 @@ const getUserById = async (req, res) => {
 };
 
 const getMyDetails = async (req, res) => {
-  const reqEmail = req.email;
+  const userId = req.userId;
 
-  if (!reqEmail)
+  if (!userId)
     return res.status(401).json({
       message: "You are unauthorized to get any details",
     });
 
   try {
-    const details = await User.findOne({ email: reqEmail })
-      .select("details followers following profile connections").populate({ path: 'connections.user', select: "-password -refreshToken -email -roles" })
+    const details = await User.findById(userId)
+      .select("details followers following profile connections sentRequest").populate({ path: 'connections.user', select: "-password -refreshToken -email -roles" }).populate({ path: 'sentRequest.user', select: "-password -refreshToken -email -roles" })
       .exec();
 
     if (!details) return res.sendStatus(403);
@@ -106,7 +112,7 @@ const getMyDetails = async (req, res) => {
 };
 
 const setMyDetails = async (req, res) => {
-  const userEmail = req.email;
+  const userId = req.userId;
 
   const { profession, address, description, socialLinks, writesOn } =
     req.body;
@@ -117,7 +123,7 @@ const setMyDetails = async (req, res) => {
     });
 
   try {
-    const foundUser = await User.findOne({ email: userEmail })
+    const foundUser = await User.findById( userId )
       .select("-password -roles -refreshToken")
       .exec();
 
@@ -180,8 +186,8 @@ const setProfilePic = async (req, res) => {
   // console.log(req.body)
   if (!file) return res.status(400).json({ message: 'No files served' });
 
-  const userEmail = req.email;
-  const foundUser = await User.findOne({ email: userEmail }).exec();
+  const userId = req.userId;
+  const foundUser = await User.findById(userId).exec();
   if (!foundUser) return res.status(401).json({ message: 'Unauthorized' })
 
   // Set the desired image dimensions and quality
@@ -228,9 +234,9 @@ const getProfilePic = async (req, res) => {
 }
 
 const removeProfilePic = async (req, res) => {
-  const email = req.email;
+  const userId = req.userId;
 
-  const foundUser = await User.findOne({ email }).exec();
+  const foundUser = await User.findById(userId).exec();
 
   if (!foundUser) return res.status(401).json({ message: 'You are unauthorized to remove any image' })
 

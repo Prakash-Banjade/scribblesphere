@@ -14,13 +14,13 @@ const corsPolicy = require('./config/corsConfig.js')
 const cookieParser = require('cookie-parser')
 const cloudinary = require('cloudinary')
 const { verifySocketJWTs } = require('./middlewares/verifyJWTs')
-const { sendConnectRequest } = require('./controllers/userSocketController')
+const { sendConnectRequest, getConnectStatus, responseConnectRequest } = require('./controllers/userSocketController')
 
 
 const { Server } = require("socket.io");
 const io = new Server(httpServer, {
   cors: {
-    origin: ['http://localhost:5173']
+    origin: ['http://localhost:5173', 'https://scribblesphere.vercel.app']
   }
 });
 
@@ -52,9 +52,11 @@ io.use(verifySocketJWTs)
 io.on('connection', socket => {
   socket.join(socket.userId);
 
-  console.log('a new user connected with id: ', socket.fullname)
+  console.log(socket.fullname + ' joined ' + socket.userId)
 
   socket.on('send_connect_req', (id, cb) => sendConnectRequest({ id, cb }, socket));
+  socket.on('get_connect_status', (id, cb) => getConnectStatus({ id, cb }, socket))
+  socket.on('response_connect_request', (connectId, action, cb) => responseConnectRequest({ connectId, action, cb }, socket))
 })
 
 
