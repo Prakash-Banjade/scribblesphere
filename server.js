@@ -14,7 +14,7 @@ const corsPolicy = require('./config/corsConfig.js')
 const cookieParser = require('cookie-parser')
 const cloudinary = require('cloudinary')
 const { verifySocketJWTs } = require('./middlewares/verifyJWTs')
-const { sendConnectRequest, getConnectStatus, responseConnectRequest } = require('./controllers/userSocketController')
+const { sendConnectRequest, getConnectStatus, responseConnectRequest, sendMessage } = require('./controllers/userSocketController')
 
 
 const { Server } = require("socket.io");
@@ -57,6 +57,9 @@ io.on('connection', socket => {
   socket.on('send_connect_req', (id, cb) => sendConnectRequest({ id, cb }, socket));
   socket.on('get_connect_status', (id, cb) => getConnectStatus({ id, cb }, socket))
   socket.on('response_connect_request', (connectId, action, cb) => responseConnectRequest({ connectId, action, cb }, socket))
+
+  socket.on('send_msg', (id, text, cb) => sendMessage({ id, text, cb }, socket))
+
 })
 
 

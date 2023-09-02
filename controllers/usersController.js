@@ -6,6 +6,9 @@ const path = require('path')
 const cloudinary = require('cloudinary')
 const ObjectId = require('mongoose').Types.ObjectId;
 
+const sendErr = (res, error) => {
+  res.status(500).json({ message: error.message, status: 'error' })
+}
 
 const getAllUsers_private = async (req, res) => {
   try {
@@ -98,7 +101,7 @@ const getMyDetails = async (req, res) => {
 
   try {
     const details = await User.findById(userId)
-      .select("details followers following profile connections sentRequest conversations").populate({ path: 'connections.user', select: "-password -refreshToken -email -roles" }).populate({ path: 'sentRequest.user', select: "-password -refreshToken -email -roles" }).populate({path: 'conversations.user', select: "-password -refreshToken -email -roles"})
+      .select("details followers following profile connections sentRequest conversations").populate({ path: 'connections.user', select: "-password -refreshToken -email -roles" }).populate({ path: 'sentRequest.user', select: "-password -refreshToken -email -roles" }).populate({ path: 'conversations.user', select: "-password -refreshToken -email -roles" })
       .exec();
 
     if (!details) return res.sendStatus(403);
@@ -299,7 +302,7 @@ const toggleFollow = async (req, res) => {
     const message = followerIndex === -1 ? 'Successfully added to interests' : 'Successfully removed from interests';
     res.json({ message, status: 'success' });
   } catch (error) {
-    res.status(500).json({ message: error.message, status: 'error' });
+    sendErr(res, e)
   }
 }
 
@@ -332,15 +335,27 @@ const addToConversation = async (req, res) => {
     })
 
   } catch (e) {
-    console.log(e.message)
-    res.status(500).json({
-      message: e.message,
-      status: 500,
-    })
+    sendErr(res, e)
   }
 
 }
 
+const getConversation = async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!id) return res.status(400).json({ message: 'Id paramater required', status: 'error' })
+
+    const { userId } = req
+
+    const foundConversation = await User.findOne({ _id: userId, conversations: { user: id } }).exec()
+
+    console.log(foundConversation)
+
+  } catch (e) {
+    sendErr(res, e)
+  }
+}
 
 
-module.exports = { getAllUsers_private, getUserById, deleteUser, getUserArticles, getMyDetails, setMyDetails, setProfilePic, getProfilePic, removeProfilePic, toggleFollow, addToConversation };
+
+module.exports = { getAllUsers_private, getUserById, deleteUser, getUserArticles, getMyDetails, setMyDetails, setProfilePic, getProfilePic, removeProfilePic, toggleFollow, addToConversation, getConversation };

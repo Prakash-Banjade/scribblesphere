@@ -10,7 +10,8 @@ const {
   getProfilePic,
   removeProfilePic,
   toggleFollow,
-  addToConversation
+  addToConversation,
+  getConversation
 } = require("../controllers/usersController.js");
 const { verifyJWTs } = require("../middlewares/verifyJWTs.js");
 const profilePicUpload = require('../middlewares/profilePicUpload.js');
@@ -20,7 +21,9 @@ router.get("/getmydetails", verifyJWTs, getMyDetails);
 router.patch("/editmydetails", verifyJWTs, setMyDetails);
 router.post('/upload', [profilePicUpload, verifyJWTs], setProfilePic)
 router.patch('/follower', verifyJWTs, toggleFollow)
-router.post('/addToConversation', verifyJWTs, addToConversation)
+router.post('/conversation/add', verifyJWTs, addToConversation)
+router.post('/conversation/:id', verifyJWTs, getConversation)
+
 router.get('/upload/:userId', verifyJWTs, getProfilePic);
 router.delete('/upload', verifyJWTs, removeProfilePic);
 

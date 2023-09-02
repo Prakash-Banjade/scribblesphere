@@ -5,10 +5,10 @@ const emitError = (socket, error) => {
     console.log(error)
 };
 
-const sendConnectRequest = async (e, socket) => {
+const sendConnectRequest = async (data, socket) => {
     try {
         const { userId } = socket;
-        const { id: receiverId, cb } = e;
+        const { id: receiverId, cb } = data;
 
         // Validate userId and receiverId here
 
@@ -84,14 +84,14 @@ const sendConnectRequest = async (e, socket) => {
 
     } catch (e) {
         emitError(socket, e.message);
-        cb({ status: 500, message: 'Error occurred', action: 'ERROR' }); // Handle error in the callback
+        data.cb({ status: 500, message: 'Error occurred', action: 'ERROR' }); // Handle error in the callback
     }
 };
 
-const getConnectStatus = async (e, socket) => {
+const getConnectStatus = async (data, socket) => {
     try {
+        const { id, cb } = data;
         const { userId } = socket;
-        const { id, cb } = e;
 
         // Validate userId and id here
 
@@ -105,18 +105,17 @@ const getConnectStatus = async (e, socket) => {
 
         cb({ status: 200, data: status?.status || 'not-connected' });
 
-        // await User.updateMany({}, {conversations: []}).exec()
 
     } catch (e) {
         emitError(socket, e.message);
-        cb({ status: 500, message: 'Error occurred', data: null });
+        data.cb({ status: 500, message: 'Error occurred', data: null });
     }
 };
 
-const responseConnectRequest = async (e, socket) => {
+const responseConnectRequest = async (data, socket) => {
     try {
+        const { connectId, action, cb } = data;
         const { userId } = socket;
-        const { connectId, action, cb } = e;
 
         // Validate userId, connectId, and action here
 
@@ -182,8 +181,96 @@ const responseConnectRequest = async (e, socket) => {
         socket.to(foundConnectRequest.user.toString()).emit('refresh_connect_status', status);
     } catch (e) {
         emitError(socket, e.message);
-        cb({ status: 500, message: 'Error occurred', action: 'ERROR' });
+        data.cb({ status: 500, message: 'Error occurred', action: 'ERROR' });
     }
 };
 
-module.exports = { sendConnectRequest, getConnectStatus, responseConnectRequest };
+const sendMessage = async (data, socket) => {
+    const emitErr = (msg, status) => {
+        socket.emit('msg_error', { message: msg, status })
+    }
+
+    try {
+        const { id, text, cb } = data;
+        if (!id) return emitErr('Empty argument, id not passed', 400)
+
+        const { userId } = socket;
+
+        const sender = await User.findById(userId).exec();
+        const receiver = await User.findById(id).exec();
+
+        if (!sender || !receiver) return emitErr('Invalid user(s) or not found', 404)
+
+        // await User.updateMany({}, { 'conversations.latestMessage': {} }).exec()
+
+        // updating sender
+        const senderMsg = await User.findOneAndUpdate(
+            {
+                _id: userId,
+                'conversations.user': id, // Match the user within the conversations array
+            },
+            {
+                $push: {
+                    'conversations.$.messages': { // Use the $ positional operator to update the correct conversation
+                        self: true,
+                        text,
+                    },
+                },
+                $set: {
+                    'conversations.$.latestMessage': {
+                        self: true,
+                        text,
+                        createdAt: new Date(), // Add the creation timestamp
+                    },
+                },
+            },
+            {
+                new: true,
+            }
+        );
+
+
+        // updating receiver
+        const receiverMsg = await User.findOneAndUpdate(
+            {
+                _id: id,
+                'conversations.user': userId,
+            },
+            {
+                $push: {
+                    'conversations.$.messages': {
+                        self: false,
+                        text,
+                    },
+                },
+                $set: {
+                    'conversations.$.latestMessage': {
+                        self: false,
+                        text,
+                        createdAt: new Date(),
+                    },
+                },
+            },
+            {
+                new: true,
+            }
+        );
+
+        // this may not be the proper way to get the latest pushed message
+        const latestSenderMessage = senderMsg.conversations.find(conv => conv.user.equals(id)).messages.slice(-1)[0];
+        const latestReceiverMessage = receiverMsg.conversations.find(conv => conv.user.equals(userId)).messages.slice(-1)[0];
+
+        cb({ stats: 200, message: 'Successfully send', data: latestSenderMessage });
+
+        socket.to(id).emit('receive_msg', latestReceiverMessage)
+        socket.to(userId).emit('update') // to refetch on sidebar_chat
+        socket.to(id).emit('update') // to refetch on sidebar_chat
+
+
+    } catch (e) {
+        emitError(socket, e.message)
+        data.cb({ status: 500, message: 'Error occurred', action: 'ERROR' });
+    }
+}
+
+module.exports = { sendConnectRequest, getConnectStatus, responseConnectRequest, sendMessage };

@@ -98,7 +98,15 @@ const userSchema = new Schema({
         type: Boolean,
         default: false,
       },
-      messages: [singleMessageSchema]
+      messages: [singleMessageSchema],
+      latestMessage: {
+        self: Boolean,
+        text: String,
+        createdAt: {
+          type: Date,
+          default: Date.now(),
+        }
+      },
     }
   ],
   refreshToken: String,
