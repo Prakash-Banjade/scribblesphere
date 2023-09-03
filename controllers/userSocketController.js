@@ -201,7 +201,23 @@ const sendMessage = async (data, socket) => {
 
         if (!sender || !receiver) return emitErr('Invalid user(s) or not found', 404)
 
-        // await User.updateMany({}, { 'conversations.latestMessage': {} }).exec()
+
+        // if the receiver has no coversation with sender then create conversation on receiver end
+        const conversationExists = receiver.conversations.find(conv => conv.user.equals(userId))
+        if (!conversationExists) {
+            const newConversation = {
+                user: userId,
+                messages: []
+            }
+
+            receiver.conversations.push(newConversation)
+
+            await receiver.save();
+
+            socket.to(id).emit('update');
+            console.log('new conversation')
+        }
+
 
         // updating sender
         const senderMsg = await User.findOneAndUpdate(
@@ -222,6 +238,7 @@ const sendMessage = async (data, socket) => {
                         text,
                         createdAt: new Date(), // Add the creation timestamp
                     },
+                    'conversations.$.seen': true,
                 },
             },
             {
@@ -249,6 +266,7 @@ const sendMessage = async (data, socket) => {
                         text,
                         createdAt: new Date(),
                     },
+                    'conversations.$.seen': false,
                 },
             },
             {
@@ -273,4 +291,32 @@ const sendMessage = async (data, socket) => {
     }
 }
 
-module.exports = { sendConnectRequest, getConnectStatus, responseConnectRequest, sendMessage };
+const messageSeen = async (data, socket) => {
+    try {
+        const { id, cb } = data;
+        const { userId } = socket;
+
+        await User.updateOne(
+            {
+                _id: userId,
+                'conversations.user': id,
+            },
+            {
+                $set: {
+                    'conversations.$.seen': true,
+                },
+            }
+        );
+
+        cb({ status: 200, message: 'Seen successfully' })
+        socket.to(userId).emit('update')
+
+
+
+    } catch (e) {
+        emitError(socket, e.message);
+        data.cb({ status: 500, message: 'Error occurred', action: 'ERROR' });
+    }
+}
+
+module.exports = { sendConnectRequest, getConnectStatus, responseConnectRequest, sendMessage, messageSeen };

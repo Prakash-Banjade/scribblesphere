@@ -347,9 +347,12 @@ const getConversation = async (req, res) => {
 
     const { userId } = req
 
-    const foundConversation = await User.findOne({ _id: userId, conversations: { user: id } }).exec()
+    const currentUser = await User.findById(userId).exec()
 
-    console.log(foundConversation)
+    const foundConversation = currentUser.conversations.find(conv => conv.user.equals(id))
+    if (!foundConversation) return res.status(404).json({ message: 'no conversation', status: 'error' })
+
+    res.json(foundConversation)
 
   } catch (e) {
     sendErr(res, e)

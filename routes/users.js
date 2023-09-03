@@ -22,7 +22,7 @@ router.patch("/editmydetails", verifyJWTs, setMyDetails);
 router.post('/upload', [profilePicUpload, verifyJWTs], setProfilePic)
 router.patch('/follower', verifyJWTs, toggleFollow)
 router.post('/conversation/add', verifyJWTs, addToConversation)
-router.post('/conversation/:id', verifyJWTs, getConversation)
+router.get('/conversation/:id', verifyJWTs, getConversation)
 
 router.get('/upload/:userId', verifyJWTs, getProfilePic);
 router.delete('/upload', verifyJWTs, removeProfilePic);
